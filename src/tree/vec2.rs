@@ -47,8 +47,8 @@ impl Vec2 {
     /// Creates a new vector from an array.
     #[inline]
     #[must_use]
-    pub fn from_array(a: [Tree; 2]) -> Self {
-        Self::new(a[0].clone(), a[1].clone())
+    pub fn from_array(a: [impl Into<Tree> + Clone; 2]) -> Self {
+        Self::new(a[0].clone().into(), a[1].clone().into())
     }
 
     /// `[x, y]`
@@ -65,8 +65,8 @@ impl Vec2 {
     /// Panics if `slice` is less than 2 elements long.
     #[inline]
     #[must_use]
-    pub fn from_slice(slice: &[Tree]) -> Self {
-        Self::new(slice[0].clone(), slice[1].clone())
+    pub fn from_slice(slice: &[impl Into<Tree> + Clone]) -> Self {
+        Self::new(slice[0].clone().into(), slice[1].clone().into())
     }
 
     /// Writes the elements of `self` to the first 2 elements in `slice`.
@@ -83,23 +83,23 @@ impl Vec2 {
     /// Creates a 3D vector from `self` and the given `z` value.
     #[inline]
     #[must_use]
-    pub fn extend(self, z: Tree) -> Vec3 {
-        Vec3::new(self.x, self.y, z)
+    pub fn extend(self, z: impl Into<Tree>) -> Vec3 {
+        Vec3::new(self.x, self.y, z.into())
     }
 
     /// Creates a 2D vector from `self` with the given value of `x`.
     #[inline]
     #[must_use]
-    pub fn with_x(mut self, x: Tree) -> Self {
-        self.x = x;
+    pub fn with_x(mut self, x: impl Into<Tree>) -> Self {
+        self.x = x.into();
         self
     }
 
     /// Creates a 2D vector from `self` with the given value of `y`.
     #[inline]
     #[must_use]
-    pub fn with_y(mut self, y: Tree) -> Self {
-        self.y = y;
+    pub fn with_y(mut self, y: impl Into<Tree>) -> Self {
+        self.y = y.into();
         self
     }
 
@@ -186,6 +186,33 @@ impl Vec2 {
         self.x * self.y
     }
 
+    /// Returns a vector containing the absolute value of each element of `self`.
+    #[inline]
+    #[must_use]
+    pub fn abs(self) -> Self {
+        Self {
+            x: self.x.abs(),
+            y: self.y.abs(),
+        }
+    }
+
+    /*
+    /// Returns a vector with elements representing the sign of `self`.
+    ///
+    /// - `1.0` if the number is positive, `+0.0` or `INFINITY`
+    /// - `-1.0` if the number is negative, `-0.0` or `NEG_INFINITY`
+    /// - `NAN` if the number is `NAN`
+    #[inline]
+    #[must_use]
+    pub fn signum(self) -> Self {
+        Self {
+
+                x: self.x.signum(),
+                y: self.y.signum(),
+        }
+    }
+    */
+
     /// Computes the length of `self`.
     #[doc(alias = "magnitude")]
     #[inline]
@@ -219,6 +246,41 @@ impl Vec2 {
     pub fn distance(self, rhs: Self) -> Tree {
         (self - rhs).length()
     }
+
+    /// Compute the squared euclidean distance between two points in space.
+    #[inline]
+    #[must_use]
+    pub fn distance_squared(self, rhs: Self) -> Tree {
+        (self - rhs).length_squared()
+    }
+
+    /*
+    /// Returns the element-wise quotient of [Euclidean division] of `self` by `rhs`.
+    #[inline]
+    #[must_use]
+    pub fn div_euclid(self, rhs: Self) -> Self {
+        Self::new(
+
+                self.x.div_euclid(rhs.x),
+                self.y.div_euclid(rhs.y),
+        )
+    }
+    */
+
+    /*
+    /// Returns the element-wise remainder of [Euclidean division] of `self` by `rhs`.
+    ///
+    /// [Euclidean division]: Tree::rem_euclid
+    #[inline]
+    #[must_use]
+    pub fn rem_euclid(self, rhs: Self) -> Self {
+        Self::new(
+
+                self.x.rem_euclid(rhs.x),
+                self.y.rem_euclid(rhs.y),
+        )
+    }
+    */
 
     /// Returns `self` normalized to length 1.0.
     ///
@@ -745,6 +807,17 @@ impl<'a> Product<&'a Self> for Vec2 {
         iter.fold(Self::splat(Tree::constant(1.0)), |a, b| {
             Self::mul(a, b.clone())
         })
+    }
+}
+
+impl Neg for Vec2 {
+    type Output = Self;
+    #[inline]
+    fn neg(self) -> Self {
+        Self {
+            x: self.x.neg(),
+            y: self.y.neg(),
+        }
     }
 }
 

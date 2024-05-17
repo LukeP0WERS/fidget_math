@@ -65,8 +65,13 @@ impl Vec4 {
     /// Creates a new vector from an array.
     #[inline]
     #[must_use]
-    pub fn from_array(a: [Tree; 4]) -> Self {
-        Self::new(a[0].clone(), a[1].clone(), a[2].clone(), a[3].clone())
+    pub fn from_array(a: [impl Into<Tree> + Clone; 4]) -> Self {
+        Self::new(
+            a[0].clone().into(),
+            a[1].clone().into(),
+            a[2].clone().into(),
+            a[3].clone().into(),
+        )
     }
 
     /// `[x, y, z, w]`
@@ -88,12 +93,12 @@ impl Vec4 {
     /// Panics if `slice` is less than 4 elements long.
     #[inline]
     #[must_use]
-    pub fn from_slice(slice: &[Tree]) -> Self {
+    pub fn from_slice(slice: &[impl Into<Tree> + Clone]) -> Self {
         Self::new(
-            slice[0].clone(),
-            slice[1].clone(),
-            slice[2].clone(),
-            slice[3].clone(),
+            slice[0].clone().into(),
+            slice[1].clone().into(),
+            slice[2].clone().into(),
+            slice[3].clone().into(),
         )
     }
 
@@ -122,32 +127,32 @@ impl Vec4 {
     /// Creates a 4D vector from `self` with the given value of `x`.
     #[inline]
     #[must_use]
-    pub fn with_x(mut self, x: Tree) -> Self {
-        self.x = x;
+    pub fn with_x(mut self, x: impl Into<Tree>) -> Self {
+        self.x = x.into();
         self
     }
 
     /// Creates a 4D vector from `self` with the given value of `y`.
     #[inline]
     #[must_use]
-    pub fn with_y(mut self, y: Tree) -> Self {
-        self.y = y;
+    pub fn with_y(mut self, y: impl Into<Tree>) -> Self {
+        self.y = y.into();
         self
     }
 
     /// Creates a 4D vector from `self` with the given value of `z`.
     #[inline]
     #[must_use]
-    pub fn with_z(mut self, z: Tree) -> Self {
-        self.z = z;
+    pub fn with_z(mut self, z: impl Into<Tree>) -> Self {
+        self.z = z.into();
         self
     }
 
     /// Creates a 4D vector from `self` with the given value of `w`.
     #[inline]
     #[must_use]
-    pub fn with_w(mut self, w: Tree) -> Self {
-        self.w = w;
+    pub fn with_w(mut self, w: impl Into<Tree>) -> Self {
+        self.w = w.into();
         self
     }
 
@@ -238,6 +243,37 @@ impl Vec4 {
         self.x * self.y * self.z * self.w
     }
 
+    /// Returns a vector containing the absolute value of each element of `self`.
+    #[inline]
+    #[must_use]
+    pub fn abs(self) -> Self {
+        Self {
+            x: self.x.abs(),
+            y: self.y.abs(),
+            z: self.z.abs(),
+            w: self.w.abs(),
+        }
+    }
+
+    /*
+    /// Returns a vector with elements representing the sign of `self`.
+    ///
+    /// - `1.0` if the number is positive, `+0.0` or `INFINITY`
+    /// - `-1.0` if the number is negative, `-0.0` or `NEG_INFINITY`
+    /// - `NAN` if the number is `NAN`
+    #[inline]
+    #[must_use]
+    pub fn signum(self) -> Self {
+        Self {
+
+                x: self.x.signum(),
+                y: self.y.signum(),
+                z: self.z.signum(),
+                w: self.w.signum(),
+        }
+    }
+    */
+
     /// Computes the length of `self`.
     #[doc(alias = "magnitude")]
     #[inline]
@@ -271,6 +307,45 @@ impl Vec4 {
     pub fn distance(self, rhs: Self) -> Tree {
         (self - rhs).length()
     }
+
+    /// Compute the squared euclidean distance between two points in space.
+    #[inline]
+    #[must_use]
+    pub fn distance_squared(self, rhs: Self) -> Tree {
+        (self - rhs).length_squared()
+    }
+
+    /*
+    /// Returns the element-wise quotient of [Euclidean division] of `self` by `rhs`.
+    #[inline]
+    #[must_use]
+    pub fn div_euclid(self, rhs: Self) -> Self {
+        Self::new(
+
+                self.x.div_euclid(rhs.x),
+                self.y.div_euclid(rhs.y),
+                self.z.div_euclid(rhs.z),
+                self.w.div_euclid(rhs.w),
+        )
+    }
+    */
+
+    /*
+    /// Returns the element-wise remainder of [Euclidean division] of `self` by `rhs`.
+    ///
+    /// [Euclidean division]: Tree::rem_euclid
+    #[inline]
+    #[must_use]
+    pub fn rem_euclid(self, rhs: Self) -> Self {
+        Self::new(
+
+                self.x.rem_euclid(rhs.x),
+                self.y.rem_euclid(rhs.y),
+                self.z.rem_euclid(rhs.z),
+                self.w.rem_euclid(rhs.w),
+        )
+    }
+    */
 
     /// Returns `self` normalized to length 1.0.
     ///
@@ -826,6 +901,19 @@ impl<'a> Product<&'a Self> for Vec4 {
         iter.fold(Self::splat(Tree::constant(1.0)), |a, b| {
             Self::mul(a, b.clone())
         })
+    }
+}
+
+impl Neg for Vec4 {
+    type Output = Self;
+    #[inline]
+    fn neg(self) -> Self {
+        Self {
+            x: self.x.neg(),
+            y: self.y.neg(),
+            z: self.z.neg(),
+            w: self.w.neg(),
+        }
     }
 }
 

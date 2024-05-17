@@ -86,10 +86,10 @@ impl {{ self_t }} {
     /// Creates a new vector from an array.
     #[inline]
     #[must_use]
-    pub fn from_array(a: [{{ scalar_t }}; {{ dim }}]) -> Self {
+    pub fn from_array(a: [impl Into<{{ scalar_t }}> + Clone; {{ dim }}]) -> Self {
         Self::new(
             {% for c in components %}
-                a[{{ loop.index0 }}].clone(),
+                a[{{ loop.index0 }}].clone().into(),
             {%- endfor %}
         )
     }
@@ -112,10 +112,10 @@ impl {{ self_t }} {
     /// Panics if `slice` is less than {{ dim }} elements long.
     #[inline]
     #[must_use]
-    pub fn from_slice(slice: &[{{ scalar_t }}]) -> Self {
+    pub fn from_slice(slice: &[impl Into<{{ scalar_t }}> + Clone]) -> Self {
         Self::new(
             {% for c in components %}
-                slice[{{ loop.index0 }}].clone(),
+                slice[{{ loop.index0 }}].clone().into(),
             {%- endfor %}
         )
     }
@@ -136,8 +136,8 @@ impl {{ self_t }} {
     /// Creates a 3D vector from `self` and the given `z` value.
     #[inline]
     #[must_use]
-    pub fn extend(self, z: {{ scalar_t }}) -> {{ vec3_t }} {
-        {{ vec3_t }}::new(self.x, self.y, z)
+    pub fn extend(self, z: impl Into<{{ scalar_t }}>) -> {{ vec3_t }} {
+        {{ vec3_t }}::new(self.x, self.y, z.into())
     }
 {% elif dim == 3 %}
     /// Internal method for creating a 3D vector from a 4D vector, discarding `w`.
@@ -151,8 +151,8 @@ impl {{ self_t }} {
     /// Creates a 4D vector from `self` and the given `w` value.
     #[inline]
     #[must_use]
-    pub fn extend(self, w: {{ scalar_t }}) -> {{ vec4_t }} {
-        {{ vec4_t }}::new(self.x, self.y, self.z, w)
+    pub fn extend(self, w: impl Into<{{ scalar_t }}>) -> {{ vec4_t }} {
+        {{ vec4_t }}::new(self.x, self.y, self.z, w.into())
     }
 
     /// Creates a 2D vector from the `x` and `y` elements of `self`, discarding `z`.
@@ -179,8 +179,8 @@ impl {{ self_t }} {
     /// Creates a {{ dim }}D vector from `self` with the given value of `{{ c }}`.
     #[inline]
     #[must_use]
-    pub fn with_{{ c }}(mut self, {{ c }}: {{ scalar_t }}) -> Self {
-        self.{{ c }} = {{ c }};
+    pub fn with_{{ c }}(mut self, {{ c }}: impl Into<{{ scalar_t }}>) -> Self {
+        self.{{ c }} = {{ c }}.into();
         self
     }
 {% endfor %}
