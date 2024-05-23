@@ -7,7 +7,7 @@ description = "glam vector types for tree construction with fidget"
 repository = "https://github.com/LukeP0WERS/fidget_math"
 
 [dependencies]
-fidget = { git = "https://github.com/mkeeter/fidget.git" }
+fidget = "0.2.7"
 
 [workspace]
 members = [
