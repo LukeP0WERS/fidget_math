@@ -5,6 +5,8 @@ edition = "2021"
 authors = ["Luke Powers"]
 description = "glam vector types for tree construction with fidget"
 repository = "https://github.com/LukeP0WERS/fidget_math"
+license = "MIT"
+readme = "README.md"
 
 [dependencies]
 fidget = "0.2.7"
