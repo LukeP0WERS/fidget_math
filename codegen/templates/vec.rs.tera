@@ -6,17 +6,17 @@
     {% set self_t = "TreeFloat" %}
     {% set self_t_ref = "&TreeFloat" %}
 {% elif scalar_t == "Tree" %}
-    {% set self_t = "Vec" ~ dim %}
-    {% set self_t_ref = "&Vec" ~ dim %}
+    {% set self_t = "TreeVec" ~ dim %}
+    {% set self_t_ref = "&TreeVec" ~ dim %}
 {% endif %}
 
 {% set scalar_t_ref = "&Tree" %}
-{% set vec2_t = "Vec2" %}
-{% set vec3_t = "Vec3" %}
-{% set vec4_t = "Vec4" %}
-{% set vec2_t_ref = "&Vec2" %}
-{% set vec3_t_ref = "&Vec3" %}
-{% set vec4_t_ref = "&Vec4" %}
+{% set vec2_t = "TreeVec2" %}
+{% set vec3_t = "TreeVec3" %}
+{% set vec4_t = "TreeVec4" %}
+{% set vec2_t_ref = "&TreeVec2" %}
+{% set vec3_t_ref = "&TreeVec3" %}
+{% set vec4_t_ref = "&TreeVec4" %}
 
 {% if dim == 2 %}
     {% set cuda_align = 8 %}
@@ -36,13 +36,13 @@ use fidget::context::Tree;
 
 {% if not is_float %}
     {% if dim != 2 %}
-    use super::vec2::Vec2;
+    use super::vec2::{{ vec2_t }};
     {% endif %}
     {% if dim == 3 %}
-    use super::vec4::Vec4;
+    use super::vec4::{{ vec4_t }};
     {% endif %}
     {% if dim != 3 %}
-    use super::vec3::Vec3;
+    use super::vec3::{{ vec3_t }};
     {% endif %}
 {% endif %}
 

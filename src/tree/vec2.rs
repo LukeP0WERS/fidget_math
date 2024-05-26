@@ -7,23 +7,23 @@ use core::iter::{Product, Sum};
 use core::ops::*;
 use fidget::context::Tree;
 
-use super::vec3::Vec3;
+use super::vec3::TreeVec3;
 
 /// Creates a 2-dimensional vector.
 #[inline(always)]
 #[must_use]
-pub fn vec2(x: Tree, y: Tree) -> Vec2 {
-    Vec2::new(x, y)
+pub fn treevec2(x: Tree, y: Tree) -> TreeVec2 {
+    TreeVec2::new(x, y)
 }
 
 /// A 2-dimensional vector.
 #[derive(Clone, PartialEq)]
-pub struct Vec2 {
+pub struct TreeVec2 {
     pub x: Tree,
     pub y: Tree,
 }
 
-impl Vec2 {
+impl TreeVec2 {
     /// Creates a new vector.
     #[inline(always)]
     #[must_use]
@@ -84,8 +84,8 @@ impl Vec2 {
     /// Creates a 3D vector from `self` and the given `z` value.
     #[inline]
     #[must_use]
-    pub fn extend(self, z: impl Into<Tree>) -> Vec3 {
-        Vec3::new(self.x, self.y, z.into())
+    pub fn extend(self, z: impl Into<Tree>) -> TreeVec3 {
+        TreeVec3::new(self.x, self.y, z.into())
     }
 
     /// Creates a 2D vector from `self` with the given value of `x`.
@@ -498,14 +498,14 @@ impl Vec2 {
     }
 }
 
-impl Default for Vec2 {
+impl Default for TreeVec2 {
     #[inline(always)]
     fn default() -> Self {
         Self::splat(Tree::constant(0.0))
     }
 }
 
-impl Div<&Vec2> for Vec2 {
+impl Div<&TreeVec2> for TreeVec2 {
     type Output = Self;
     #[inline]
     fn div(self, rhs: &Self) -> Self {
@@ -516,7 +516,7 @@ impl Div<&Vec2> for Vec2 {
     }
 }
 
-impl DivAssign<&Vec2> for Vec2 {
+impl DivAssign<&TreeVec2> for TreeVec2 {
     #[inline]
     fn div_assign(&mut self, rhs: &Self) {
         self.x.div_assign(rhs.x.clone());
@@ -524,7 +524,7 @@ impl DivAssign<&Vec2> for Vec2 {
     }
 }
 
-impl Div<&Tree> for Vec2 {
+impl Div<&Tree> for TreeVec2 {
     type Output = Self;
     #[inline]
     fn div(self, rhs: &Tree) -> Self {
@@ -535,7 +535,7 @@ impl Div<&Tree> for Vec2 {
     }
 }
 
-impl DivAssign<&Tree> for Vec2 {
+impl DivAssign<&Tree> for TreeVec2 {
     #[inline]
     fn div_assign(&mut self, rhs: &Tree) {
         self.x.div_assign(rhs.clone());
@@ -543,18 +543,18 @@ impl DivAssign<&Tree> for Vec2 {
     }
 }
 
-impl Div<&Vec2> for &Tree {
-    type Output = Vec2;
+impl Div<&TreeVec2> for &Tree {
+    type Output = TreeVec2;
     #[inline]
-    fn div(self, rhs: &Vec2) -> Vec2 {
-        Vec2 {
+    fn div(self, rhs: &TreeVec2) -> TreeVec2 {
+        TreeVec2 {
             x: self.clone().div(rhs.x.clone()),
             y: self.clone().div(rhs.y.clone()),
         }
     }
 }
 
-impl Mul<&Vec2> for Vec2 {
+impl Mul<&TreeVec2> for TreeVec2 {
     type Output = Self;
     #[inline]
     fn mul(self, rhs: &Self) -> Self {
@@ -565,7 +565,7 @@ impl Mul<&Vec2> for Vec2 {
     }
 }
 
-impl MulAssign<&Vec2> for Vec2 {
+impl MulAssign<&TreeVec2> for TreeVec2 {
     #[inline]
     fn mul_assign(&mut self, rhs: &Self) {
         self.x.mul_assign(rhs.x.clone());
@@ -573,7 +573,7 @@ impl MulAssign<&Vec2> for Vec2 {
     }
 }
 
-impl Mul<&Tree> for Vec2 {
+impl Mul<&Tree> for TreeVec2 {
     type Output = Self;
     #[inline]
     fn mul(self, rhs: &Tree) -> Self {
@@ -584,7 +584,7 @@ impl Mul<&Tree> for Vec2 {
     }
 }
 
-impl MulAssign<&Tree> for Vec2 {
+impl MulAssign<&Tree> for TreeVec2 {
     #[inline]
     fn mul_assign(&mut self, rhs: &Tree) {
         self.x.mul_assign(rhs.clone());
@@ -592,18 +592,18 @@ impl MulAssign<&Tree> for Vec2 {
     }
 }
 
-impl Mul<&Vec2> for &Tree {
-    type Output = Vec2;
+impl Mul<&TreeVec2> for &Tree {
+    type Output = TreeVec2;
     #[inline]
-    fn mul(self, rhs: &Vec2) -> Vec2 {
-        Vec2 {
+    fn mul(self, rhs: &TreeVec2) -> TreeVec2 {
+        TreeVec2 {
             x: self.clone().mul(rhs.x.clone()),
             y: self.clone().mul(rhs.y.clone()),
         }
     }
 }
 
-impl Add<&Vec2> for Vec2 {
+impl Add<&TreeVec2> for TreeVec2 {
     type Output = Self;
     #[inline]
     fn add(self, rhs: &Self) -> Self {
@@ -614,7 +614,7 @@ impl Add<&Vec2> for Vec2 {
     }
 }
 
-impl AddAssign<&Vec2> for Vec2 {
+impl AddAssign<&TreeVec2> for TreeVec2 {
     #[inline]
     fn add_assign(&mut self, rhs: &Self) {
         self.x.add_assign(rhs.x.clone());
@@ -622,7 +622,7 @@ impl AddAssign<&Vec2> for Vec2 {
     }
 }
 
-impl Add<&Tree> for Vec2 {
+impl Add<&Tree> for TreeVec2 {
     type Output = Self;
     #[inline]
     fn add(self, rhs: &Tree) -> Self {
@@ -633,7 +633,7 @@ impl Add<&Tree> for Vec2 {
     }
 }
 
-impl AddAssign<&Tree> for Vec2 {
+impl AddAssign<&Tree> for TreeVec2 {
     #[inline]
     fn add_assign(&mut self, rhs: &Tree) {
         self.x.add_assign(rhs.clone());
@@ -641,18 +641,18 @@ impl AddAssign<&Tree> for Vec2 {
     }
 }
 
-impl Add<&Vec2> for &Tree {
-    type Output = Vec2;
+impl Add<&TreeVec2> for &Tree {
+    type Output = TreeVec2;
     #[inline]
-    fn add(self, rhs: &Vec2) -> Vec2 {
-        Vec2 {
+    fn add(self, rhs: &TreeVec2) -> TreeVec2 {
+        TreeVec2 {
             x: self.clone().add(rhs.x.clone()),
             y: self.clone().add(rhs.y.clone()),
         }
     }
 }
 
-impl Sub<&Vec2> for Vec2 {
+impl Sub<&TreeVec2> for TreeVec2 {
     type Output = Self;
     #[inline]
     fn sub(self, rhs: &Self) -> Self {
@@ -663,15 +663,15 @@ impl Sub<&Vec2> for Vec2 {
     }
 }
 
-impl SubAssign<&Vec2> for Vec2 {
+impl SubAssign<&TreeVec2> for TreeVec2 {
     #[inline]
-    fn sub_assign(&mut self, rhs: &Vec2) {
+    fn sub_assign(&mut self, rhs: &TreeVec2) {
         self.x.sub_assign(rhs.x.clone());
         self.y.sub_assign(rhs.y.clone());
     }
 }
 
-impl Sub<&Tree> for Vec2 {
+impl Sub<&Tree> for TreeVec2 {
     type Output = Self;
     #[inline]
     fn sub(self, rhs: &Tree) -> Self {
@@ -682,7 +682,7 @@ impl Sub<&Tree> for Vec2 {
     }
 }
 
-impl SubAssign<&Tree> for Vec2 {
+impl SubAssign<&Tree> for TreeVec2 {
     #[inline]
     fn sub_assign(&mut self, rhs: &Tree) {
         self.x.sub_assign(rhs.clone());
@@ -690,18 +690,18 @@ impl SubAssign<&Tree> for Vec2 {
     }
 }
 
-impl Sub<&Vec2> for &Tree {
-    type Output = Vec2;
+impl Sub<&TreeVec2> for &Tree {
+    type Output = TreeVec2;
     #[inline]
-    fn sub(self, rhs: &Vec2) -> Vec2 {
-        Vec2 {
+    fn sub(self, rhs: &TreeVec2) -> TreeVec2 {
+        TreeVec2 {
             x: self.clone().sub(rhs.x.clone()),
             y: self.clone().sub(rhs.y.clone()),
         }
     }
 }
 
-impl Rem<&Vec2> for Vec2 {
+impl Rem<&TreeVec2> for TreeVec2 {
     type Output = Self;
     #[inline]
     fn rem(self, rhs: &Self) -> Self {
@@ -712,7 +712,7 @@ impl Rem<&Vec2> for Vec2 {
     }
 }
 
-impl RemAssign<&Vec2> for Vec2 {
+impl RemAssign<&TreeVec2> for TreeVec2 {
     #[inline]
     fn rem_assign(&mut self, rhs: &Self) {
         self.x = self.x.modulo(rhs.x.clone());
@@ -720,7 +720,7 @@ impl RemAssign<&Vec2> for Vec2 {
     }
 }
 
-impl Rem<&Tree> for Vec2 {
+impl Rem<&Tree> for TreeVec2 {
     type Output = Self;
     #[inline]
     fn rem(self, rhs: &Tree) -> Self {
@@ -731,7 +731,7 @@ impl Rem<&Tree> for Vec2 {
     }
 }
 
-impl RemAssign<&Tree> for Vec2 {
+impl RemAssign<&Tree> for TreeVec2 {
     #[inline]
     fn rem_assign(&mut self, rhs: &Tree) {
         self.x = self.x.modulo(rhs.clone());
@@ -739,11 +739,11 @@ impl RemAssign<&Tree> for Vec2 {
     }
 }
 
-impl Rem<&Vec2> for &Tree {
-    type Output = Vec2;
+impl Rem<&TreeVec2> for &Tree {
+    type Output = TreeVec2;
     #[inline]
-    fn rem(self, rhs: &Vec2) -> Vec2 {
-        Vec2 {
+    fn rem(self, rhs: &TreeVec2) -> TreeVec2 {
+        TreeVec2 {
             x: self.clone().modulo(rhs.x.clone()),
             y: self.clone().modulo(rhs.y.clone()),
         }
@@ -751,22 +751,22 @@ impl Rem<&Vec2> for &Tree {
 }
 
 #[cfg(not(target_arch = "spirv"))]
-impl AsRef<[Tree; 2]> for Vec2 {
+impl AsRef<[Tree; 2]> for TreeVec2 {
     #[inline]
     fn as_ref(&self) -> &[Tree; 2] {
-        unsafe { &*(self as *const Vec2 as *const [Tree; 2]) }
+        unsafe { &*(self as *const TreeVec2 as *const [Tree; 2]) }
     }
 }
 
 #[cfg(not(target_arch = "spirv"))]
-impl AsMut<[Tree; 2]> for Vec2 {
+impl AsMut<[Tree; 2]> for TreeVec2 {
     #[inline]
     fn as_mut(&mut self) -> &mut [Tree; 2] {
-        unsafe { &mut *(self as *mut Vec2 as *mut [Tree; 2]) }
+        unsafe { &mut *(self as *mut TreeVec2 as *mut [Tree; 2]) }
     }
 }
 
-impl Sum for Vec2 {
+impl Sum for TreeVec2 {
     #[inline]
     fn sum<I>(iter: I) -> Self
     where
@@ -776,7 +776,7 @@ impl Sum for Vec2 {
     }
 }
 
-impl<'a> Sum<&'a Self> for Vec2 {
+impl<'a> Sum<&'a Self> for TreeVec2 {
     #[inline]
     fn sum<I>(iter: I) -> Self
     where
@@ -786,7 +786,7 @@ impl<'a> Sum<&'a Self> for Vec2 {
     }
 }
 
-impl Product for Vec2 {
+impl Product for TreeVec2 {
     #[inline]
     fn product<I>(iter: I) -> Self
     where
@@ -796,7 +796,7 @@ impl Product for Vec2 {
     }
 }
 
-impl<'a> Product<&'a Self> for Vec2 {
+impl<'a> Product<&'a Self> for TreeVec2 {
     #[inline]
     fn product<I>(iter: I) -> Self
     where
@@ -806,7 +806,7 @@ impl<'a> Product<&'a Self> for Vec2 {
     }
 }
 
-impl Neg for Vec2 {
+impl Neg for TreeVec2 {
     type Output = Self;
     #[inline]
     fn neg(self) -> Self {
@@ -817,7 +817,7 @@ impl Neg for Vec2 {
     }
 }
 
-impl Index<usize> for Vec2 {
+impl Index<usize> for TreeVec2 {
     type Output = Tree;
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
@@ -829,7 +829,7 @@ impl Index<usize> for Vec2 {
     }
 }
 
-impl IndexMut<usize> for Vec2 {
+impl IndexMut<usize> for TreeVec2 {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         match index {
@@ -841,39 +841,39 @@ impl IndexMut<usize> for Vec2 {
 }
 
 #[cfg(not(target_arch = "spirv"))]
-impl fmt::Debug for Vec2 {
+impl fmt::Debug for TreeVec2 {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt.debug_tuple(stringify!(Vec2))
+        fmt.debug_tuple(stringify!(TreeVec2))
             .field(&self.x)
             .field(&self.y)
             .finish()
     }
 }
 
-impl From<[Tree; 2]> for Vec2 {
+impl From<[Tree; 2]> for TreeVec2 {
     #[inline]
     fn from(a: [Tree; 2]) -> Self {
         Self::new(a[0].clone(), a[1].clone())
     }
 }
 
-impl From<Vec2> for [Tree; 2] {
+impl From<TreeVec2> for [Tree; 2] {
     #[inline]
-    fn from(v: Vec2) -> Self {
+    fn from(v: TreeVec2) -> Self {
         [v.x, v.y]
     }
 }
 
-impl From<(Tree, Tree)> for Vec2 {
+impl From<(Tree, Tree)> for TreeVec2 {
     #[inline]
     fn from(t: (Tree, Tree)) -> Self {
         Self::new(t.0, t.1)
     }
 }
 
-impl From<Vec2> for (Tree, Tree) {
+impl From<TreeVec2> for (Tree, Tree) {
     #[inline]
-    fn from(v: Vec2) -> Self {
+    fn from(v: TreeVec2) -> Self {
         (v.x, v.y)
     }
 }
