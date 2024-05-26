@@ -66,8 +66,8 @@ impl TreeFloat {
     /// Computes the dot product of `self` and `rhs`.
     #[inline]
     #[must_use]
-    pub fn dot(self, rhs: Self) -> Tree {
-        self.x * rhs.x
+    pub fn dot(self, rhs: &Self) -> Tree {
+        self.x * rhs.x.clone()
     }
 
     /// Returns a vector containing the minimum values for each element of `self` and `rhs`.
@@ -75,9 +75,9 @@ impl TreeFloat {
     /// In other words this computes `[self.x.min(rhs.x), self.y.min(rhs.y), ..]`.
     #[inline]
     #[must_use]
-    pub fn min(self, rhs: Self) -> Self {
+    pub fn min(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.min(rhs.x),
+            x: self.x.min(rhs.x.clone()),
         }
     }
 
@@ -86,9 +86,9 @@ impl TreeFloat {
     /// In other words this computes `[self.x.max(rhs.x), self.y.max(rhs.y), ..]`.
     #[inline]
     #[must_use]
-    pub fn max(self, rhs: Self) -> Self {
+    pub fn max(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.max(rhs.x),
+            x: self.x.max(rhs.x.clone()),
         }
     }
 
@@ -97,7 +97,7 @@ impl TreeFloat {
     /// Each element in `min` must be less-or-equal to the corresponding element in `max`.
     #[inline]
     #[must_use]
-    pub fn clamp(self, min: Self, max: Self) -> Self {
+    pub fn clamp(self, min: &Self, max: &Self) -> Self {
         self.max(min).min(max)
     }
 
@@ -129,7 +129,7 @@ impl TreeFloat {
     #[inline]
     #[must_use]
     pub fn length(self) -> Tree {
-        self.clone().dot(self).sqrt()
+        self.clone().dot(&self).sqrt()
     }
 
     /// Computes the squared length of `self`.
@@ -139,7 +139,7 @@ impl TreeFloat {
     #[inline]
     #[must_use]
     pub fn length_squared(self) -> Tree {
-        self.clone().dot(self)
+        self.clone().dot(&self)
     }
 
     /// Computes `1.0 / length()`.
@@ -154,14 +154,14 @@ impl TreeFloat {
     /// Computes the Euclidean distance between two points in space.
     #[inline]
     #[must_use]
-    pub fn distance(self, rhs: Self) -> Tree {
+    pub fn distance(self, rhs: &Self) -> Tree {
         (self - rhs).length()
     }
 
     /// Compute the squared euclidean distance between two points in space.
     #[inline]
     #[must_use]
-    pub fn distance_squared(self, rhs: Self) -> Tree {
+    pub fn distance_squared(self, rhs: &Self) -> Tree {
         (self - rhs).length_squared()
     }
 
@@ -169,7 +169,7 @@ impl TreeFloat {
     /// Returns the element-wise quotient of [Euclidean division] of `self` by `rhs`.
     #[inline]
     #[must_use]
-    pub fn div_euclid(self, rhs: Self) -> Self {
+    pub fn div_euclid(self, rhs: &Self) -> Self {
         Self::new(
 
                 self.x.div_euclid(rhs.x),
@@ -183,7 +183,7 @@ impl TreeFloat {
     /// [Euclidean division]: Tree::rem_euclid
     #[inline]
     #[must_use]
-    pub fn rem_euclid(self, rhs: Self) -> Self {
+    pub fn rem_euclid(self, rhs: &Self) -> Self {
         Self::new(
 
                 self.x.rem_euclid(rhs.x),
@@ -209,8 +209,8 @@ impl TreeFloat {
     /// `rhs` must be of non-zero length.
     #[inline]
     #[must_use]
-    pub fn project_onto(self, rhs: Self) -> Self {
-        let other_len_sq_rcp = Tree::constant(1.0) / rhs.clone().dot(rhs.clone());
+    pub fn project_onto(self, rhs: &Self) -> Self {
+        let other_len_sq_rcp = Tree::constant(1.0) / rhs.clone().dot(rhs);
         rhs.clone() * &self.dot(rhs) * &other_len_sq_rcp
     }
 
@@ -222,8 +222,8 @@ impl TreeFloat {
     /// `rhs` must be of non-zero length.
     #[inline]
     #[must_use]
-    pub fn reject_from(self, rhs: Self) -> Self {
-        self.clone() - self.project_onto(rhs)
+    pub fn reject_from(self, rhs: &Self) -> Self {
+        self.clone() - &self.project_onto(rhs)
     }
 
     /// Returns the vector projection of `self` onto `rhs`.
@@ -231,7 +231,7 @@ impl TreeFloat {
     /// `rhs` must be normalized.
     #[inline]
     #[must_use]
-    pub fn project_onto_normalized(self, rhs: Self) -> Self {
+    pub fn project_onto_normalized(self, rhs: &Self) -> Self {
         rhs.clone() * &self.dot(rhs)
     }
 
@@ -243,8 +243,8 @@ impl TreeFloat {
     /// `rhs` must be normalized.
     #[inline]
     #[must_use]
-    pub fn reject_from_normalized(self, rhs: Self) -> Self {
-        self.clone() - self.project_onto_normalized(rhs)
+    pub fn reject_from_normalized(self, rhs: &Self) -> Self {
+        self.clone() - &self.project_onto_normalized(rhs)
     }
 
     /// Returns a vector containing the nearest integer to a number for each element of `self`.
@@ -307,7 +307,7 @@ impl TreeFloat {
     #[inline]
     #[must_use]
     pub fn fract_gl(self) -> Self {
-        self.clone() - self.floor()
+        self.clone() - &self.floor()
     }
 
     /// Returns a vector containing `e^self` (the exponential function) for each element of
@@ -347,8 +347,8 @@ impl TreeFloat {
     #[doc(alias = "mix")]
     #[inline]
     #[must_use]
-    pub fn lerp(self, rhs: Self, s: &Tree) -> Self {
-        self.clone() + ((rhs - self) * s)
+    pub fn lerp(self, rhs: &Self, s: &Tree) -> Self {
+        self.clone() + &((rhs.clone() - &self) * s)
     }
 
     /// Calculates the midpoint between `self` and `rhs`.
@@ -357,7 +357,7 @@ impl TreeFloat {
     /// `a.midpoint(b)` should yield the same result as `a.lerp(b, 0.5)`
     /// while being slightly cheaper to compute.
     #[inline]
-    pub fn midpoint(self, rhs: Self) -> Self {
+    pub fn midpoint(self, rhs: &Self) -> Self {
         (self + rhs) * &Tree::constant(0.5)
     }
 }
@@ -369,20 +369,20 @@ impl Default for TreeFloat {
     }
 }
 
-impl Div<TreeFloat> for TreeFloat {
+impl Div<&TreeFloat> for TreeFloat {
     type Output = Self;
     #[inline]
-    fn div(self, rhs: Self) -> Self {
+    fn div(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.div(rhs.x),
+            x: self.x.div(rhs.x.clone()),
         }
     }
 }
 
-impl DivAssign<TreeFloat> for TreeFloat {
+impl DivAssign<&TreeFloat> for TreeFloat {
     #[inline]
-    fn div_assign(&mut self, rhs: Self) {
-        self.x.div_assign(rhs.x);
+    fn div_assign(&mut self, rhs: &Self) {
+        self.x.div_assign(rhs.x.clone());
     }
 }
 
@@ -403,20 +403,20 @@ impl DivAssign<&Tree> for TreeFloat {
     }
 }
 
-impl Mul<TreeFloat> for TreeFloat {
+impl Mul<&TreeFloat> for TreeFloat {
     type Output = Self;
     #[inline]
-    fn mul(self, rhs: Self) -> Self {
+    fn mul(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.mul(rhs.x),
+            x: self.x.mul(rhs.x.clone()),
         }
     }
 }
 
-impl MulAssign<TreeFloat> for TreeFloat {
+impl MulAssign<&TreeFloat> for TreeFloat {
     #[inline]
-    fn mul_assign(&mut self, rhs: Self) {
-        self.x.mul_assign(rhs.x);
+    fn mul_assign(&mut self, rhs: &Self) {
+        self.x.mul_assign(rhs.x.clone());
     }
 }
 
@@ -437,20 +437,20 @@ impl MulAssign<&Tree> for TreeFloat {
     }
 }
 
-impl Add<TreeFloat> for TreeFloat {
+impl Add<&TreeFloat> for TreeFloat {
     type Output = Self;
     #[inline]
-    fn add(self, rhs: Self) -> Self {
+    fn add(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.add(rhs.x),
+            x: self.x.add(rhs.x.clone()),
         }
     }
 }
 
-impl AddAssign<TreeFloat> for TreeFloat {
+impl AddAssign<&TreeFloat> for TreeFloat {
     #[inline]
-    fn add_assign(&mut self, rhs: Self) {
-        self.x.add_assign(rhs.x);
+    fn add_assign(&mut self, rhs: &Self) {
+        self.x.add_assign(rhs.x.clone());
     }
 }
 
@@ -471,20 +471,20 @@ impl AddAssign<&Tree> for TreeFloat {
     }
 }
 
-impl Sub<TreeFloat> for TreeFloat {
+impl Sub<&TreeFloat> for TreeFloat {
     type Output = Self;
     #[inline]
-    fn sub(self, rhs: Self) -> Self {
+    fn sub(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.sub(rhs.x),
+            x: self.x.sub(rhs.x.clone()),
         }
     }
 }
 
-impl SubAssign<TreeFloat> for TreeFloat {
+impl SubAssign<&TreeFloat> for TreeFloat {
     #[inline]
-    fn sub_assign(&mut self, rhs: TreeFloat) {
-        self.x.sub_assign(rhs.x);
+    fn sub_assign(&mut self, rhs: &TreeFloat) {
+        self.x.sub_assign(rhs.x.clone());
     }
 }
 
@@ -505,20 +505,20 @@ impl SubAssign<&Tree> for TreeFloat {
     }
 }
 
-impl Rem<TreeFloat> for TreeFloat {
+impl Rem<&TreeFloat> for TreeFloat {
     type Output = Self;
     #[inline]
-    fn rem(self, rhs: Self) -> Self {
+    fn rem(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.modulo(rhs.x),
+            x: self.x.modulo(rhs.x.clone()),
         }
     }
 }
 
-impl RemAssign<TreeFloat> for TreeFloat {
+impl RemAssign<&TreeFloat> for TreeFloat {
     #[inline]
-    fn rem_assign(&mut self, rhs: Self) {
-        self.x = self.x.modulo(rhs.x);
+    fn rem_assign(&mut self, rhs: &Self) {
+        self.x = self.x.modulo(rhs.x.clone());
     }
 }
 
@@ -539,12 +539,12 @@ impl RemAssign<&Tree> for TreeFloat {
     }
 }
 
-impl Rem<TreeFloat> for &Tree {
+impl Rem<&TreeFloat> for &Tree {
     type Output = TreeFloat;
     #[inline]
-    fn rem(self, rhs: TreeFloat) -> TreeFloat {
+    fn rem(self, rhs: &TreeFloat) -> TreeFloat {
         TreeFloat {
-            x: self.clone().modulo(rhs.x),
+            x: self.clone().modulo(rhs.x.clone()),
         }
     }
 }

@@ -37,7 +37,6 @@ impl ContextBuilder {
 
     pub fn with_tree(mut self) -> Self {
         self.0.insert("scalar_t", "Tree");
-        self.0.insert("scalar_t_ref", "&Tree");
         self
     }
 

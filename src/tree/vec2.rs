@@ -107,14 +107,14 @@ impl Vec2 {
     /// Computes the dot product of `self` and `rhs`.
     #[inline]
     #[must_use]
-    pub fn dot(self, rhs: Self) -> Tree {
-        (self.x * rhs.x) + (self.y * rhs.y)
+    pub fn dot(self, rhs: &Self) -> Tree {
+        (self.x * rhs.x.clone()) + (self.y * rhs.y.clone())
     }
 
     /// Returns a vector where every component is the dot product of `self` and `rhs`.
     #[inline]
     #[must_use]
-    pub fn dot_into_vec(self, rhs: Self) -> Self {
+    pub fn dot_into_vec(self, rhs: &Self) -> Self {
         Self::splat(self.dot(rhs))
     }
 
@@ -123,10 +123,10 @@ impl Vec2 {
     /// In other words this computes `[self.x.min(rhs.x), self.y.min(rhs.y), ..]`.
     #[inline]
     #[must_use]
-    pub fn min(self, rhs: Self) -> Self {
+    pub fn min(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.min(rhs.x),
-            y: self.y.min(rhs.y),
+            x: self.x.min(rhs.x.clone()),
+            y: self.y.min(rhs.y.clone()),
         }
     }
 
@@ -135,10 +135,10 @@ impl Vec2 {
     /// In other words this computes `[self.x.max(rhs.x), self.y.max(rhs.y), ..]`.
     #[inline]
     #[must_use]
-    pub fn max(self, rhs: Self) -> Self {
+    pub fn max(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.max(rhs.x),
-            y: self.y.max(rhs.y),
+            x: self.x.max(rhs.x.clone()),
+            y: self.y.max(rhs.y.clone()),
         }
     }
 
@@ -147,7 +147,7 @@ impl Vec2 {
     /// Each element in `min` must be less-or-equal to the corresponding element in `max`.
     #[inline]
     #[must_use]
-    pub fn clamp(self, min: Self, max: Self) -> Self {
+    pub fn clamp(self, min: &Self, max: &Self) -> Self {
         self.max(min).min(max)
     }
 
@@ -218,7 +218,7 @@ impl Vec2 {
     #[inline]
     #[must_use]
     pub fn length(self) -> Tree {
-        self.clone().dot(self).sqrt()
+        self.clone().dot(&self).sqrt()
     }
 
     /// Computes the squared length of `self`.
@@ -228,7 +228,7 @@ impl Vec2 {
     #[inline]
     #[must_use]
     pub fn length_squared(self) -> Tree {
-        self.clone().dot(self)
+        self.clone().dot(&self)
     }
 
     /// Computes `1.0 / length()`.
@@ -243,14 +243,14 @@ impl Vec2 {
     /// Computes the Euclidean distance between two points in space.
     #[inline]
     #[must_use]
-    pub fn distance(self, rhs: Self) -> Tree {
+    pub fn distance(self, rhs: &Self) -> Tree {
         (self - rhs).length()
     }
 
     /// Compute the squared euclidean distance between two points in space.
     #[inline]
     #[must_use]
-    pub fn distance_squared(self, rhs: Self) -> Tree {
+    pub fn distance_squared(self, rhs: &Self) -> Tree {
         (self - rhs).length_squared()
     }
 
@@ -258,7 +258,7 @@ impl Vec2 {
     /// Returns the element-wise quotient of [Euclidean division] of `self` by `rhs`.
     #[inline]
     #[must_use]
-    pub fn div_euclid(self, rhs: Self) -> Self {
+    pub fn div_euclid(self, rhs: &Self) -> Self {
         Self::new(
 
                 self.x.div_euclid(rhs.x),
@@ -273,7 +273,7 @@ impl Vec2 {
     /// [Euclidean division]: Tree::rem_euclid
     #[inline]
     #[must_use]
-    pub fn rem_euclid(self, rhs: Self) -> Self {
+    pub fn rem_euclid(self, rhs: &Self) -> Self {
         Self::new(
 
                 self.x.rem_euclid(rhs.x),
@@ -300,8 +300,8 @@ impl Vec2 {
     /// `rhs` must be of non-zero length.
     #[inline]
     #[must_use]
-    pub fn project_onto(self, rhs: Self) -> Self {
-        let other_len_sq_rcp = Tree::constant(1.0) / rhs.clone().dot(rhs.clone());
+    pub fn project_onto(self, rhs: &Self) -> Self {
+        let other_len_sq_rcp = Tree::constant(1.0) / rhs.clone().dot(rhs);
         rhs.clone() * &self.dot(rhs) * &other_len_sq_rcp
     }
 
@@ -313,8 +313,8 @@ impl Vec2 {
     /// `rhs` must be of non-zero length.
     #[inline]
     #[must_use]
-    pub fn reject_from(self, rhs: Self) -> Self {
-        self.clone() - self.project_onto(rhs)
+    pub fn reject_from(self, rhs: &Self) -> Self {
+        self.clone() - &self.project_onto(rhs)
     }
 
     /// Returns the vector projection of `self` onto `rhs`.
@@ -322,7 +322,7 @@ impl Vec2 {
     /// `rhs` must be normalized.
     #[inline]
     #[must_use]
-    pub fn project_onto_normalized(self, rhs: Self) -> Self {
+    pub fn project_onto_normalized(self, rhs: &Self) -> Self {
         rhs.clone() * &self.dot(rhs)
     }
 
@@ -334,8 +334,8 @@ impl Vec2 {
     /// `rhs` must be normalized.
     #[inline]
     #[must_use]
-    pub fn reject_from_normalized(self, rhs: Self) -> Self {
-        self.clone() - self.project_onto_normalized(rhs)
+    pub fn reject_from_normalized(self, rhs: &Self) -> Self {
+        self.clone() - &self.project_onto_normalized(rhs)
     }
 
     /// Returns a vector containing the nearest integer to a number for each element of `self`.
@@ -408,7 +408,7 @@ impl Vec2 {
     #[inline]
     #[must_use]
     pub fn fract_gl(self) -> Self {
-        self.clone() - self.floor()
+        self.clone() - &self.floor()
     }
 
     /// Returns a vector containing `e^self` (the exponential function) for each element of
@@ -450,8 +450,8 @@ impl Vec2 {
     #[doc(alias = "mix")]
     #[inline]
     #[must_use]
-    pub fn lerp(self, rhs: Self, s: &Tree) -> Self {
-        self.clone() + ((rhs - self) * s)
+    pub fn lerp(self, rhs: &Self, s: &Tree) -> Self {
+        self.clone() + &((rhs.clone() - &self) * s)
     }
 
     /// Calculates the midpoint between `self` and `rhs`.
@@ -460,7 +460,7 @@ impl Vec2 {
     /// `a.midpoint(b)` should yield the same result as `a.lerp(b, 0.5)`
     /// while being slightly cheaper to compute.
     #[inline]
-    pub fn midpoint(self, rhs: Self) -> Self {
+    pub fn midpoint(self, rhs: &Self) -> Self {
         (self + rhs) * &Tree::constant(0.5)
     }
 
@@ -481,8 +481,8 @@ impl Vec2 {
     #[doc(alias = "determinant")]
     #[inline]
     #[must_use]
-    pub fn perp_dot(self, rhs: Self) -> Tree {
-        (self.x * rhs.y) - (self.y * rhs.x)
+    pub fn perp_dot(self, rhs: &Self) -> Tree {
+        (self.x * rhs.y.clone()) - (self.y * rhs.x.clone())
     }
 
     /// Returns `rhs` rotated by the angle of `self`. If `self` is normalized,
@@ -490,7 +490,7 @@ impl Vec2 {
     /// it will be like a rotation with a multiplication by `self`'s length.
     #[inline]
     #[must_use]
-    pub fn rotate(self, rhs: Self) -> Self {
+    pub fn rotate(self, rhs: &Self) -> Self {
         Self {
             x: self.x.clone() * rhs.x.clone() - self.y.clone() * rhs.y.clone(),
             y: self.y.clone() * rhs.x.clone() + self.x.clone() * rhs.y.clone(),
@@ -505,22 +505,22 @@ impl Default for Vec2 {
     }
 }
 
-impl Div<Vec2> for Vec2 {
+impl Div<&Vec2> for Vec2 {
     type Output = Self;
     #[inline]
-    fn div(self, rhs: Self) -> Self {
+    fn div(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.div(rhs.x),
-            y: self.y.div(rhs.y),
+            x: self.x.div(rhs.x.clone()),
+            y: self.y.div(rhs.y.clone()),
         }
     }
 }
 
-impl DivAssign<Vec2> for Vec2 {
+impl DivAssign<&Vec2> for Vec2 {
     #[inline]
-    fn div_assign(&mut self, rhs: Self) {
-        self.x.div_assign(rhs.x);
-        self.y.div_assign(rhs.y);
+    fn div_assign(&mut self, rhs: &Self) {
+        self.x.div_assign(rhs.x.clone());
+        self.y.div_assign(rhs.y.clone());
     }
 }
 
@@ -543,33 +543,33 @@ impl DivAssign<&Tree> for Vec2 {
     }
 }
 
-impl Div<Vec2> for &Tree {
+impl Div<&Vec2> for &Tree {
     type Output = Vec2;
     #[inline]
-    fn div(self, rhs: Vec2) -> Vec2 {
+    fn div(self, rhs: &Vec2) -> Vec2 {
         Vec2 {
-            x: self.clone().div(rhs.x),
-            y: self.clone().div(rhs.y),
+            x: self.clone().div(rhs.x.clone()),
+            y: self.clone().div(rhs.y.clone()),
         }
     }
 }
 
-impl Mul<Vec2> for Vec2 {
+impl Mul<&Vec2> for Vec2 {
     type Output = Self;
     #[inline]
-    fn mul(self, rhs: Self) -> Self {
+    fn mul(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.mul(rhs.x),
-            y: self.y.mul(rhs.y),
+            x: self.x.mul(rhs.x.clone()),
+            y: self.y.mul(rhs.y.clone()),
         }
     }
 }
 
-impl MulAssign<Vec2> for Vec2 {
+impl MulAssign<&Vec2> for Vec2 {
     #[inline]
-    fn mul_assign(&mut self, rhs: Self) {
-        self.x.mul_assign(rhs.x);
-        self.y.mul_assign(rhs.y);
+    fn mul_assign(&mut self, rhs: &Self) {
+        self.x.mul_assign(rhs.x.clone());
+        self.y.mul_assign(rhs.y.clone());
     }
 }
 
@@ -592,33 +592,33 @@ impl MulAssign<&Tree> for Vec2 {
     }
 }
 
-impl Mul<Vec2> for &Tree {
+impl Mul<&Vec2> for &Tree {
     type Output = Vec2;
     #[inline]
-    fn mul(self, rhs: Vec2) -> Vec2 {
+    fn mul(self, rhs: &Vec2) -> Vec2 {
         Vec2 {
-            x: self.clone().mul(rhs.x),
-            y: self.clone().mul(rhs.y),
+            x: self.clone().mul(rhs.x.clone()),
+            y: self.clone().mul(rhs.y.clone()),
         }
     }
 }
 
-impl Add<Vec2> for Vec2 {
+impl Add<&Vec2> for Vec2 {
     type Output = Self;
     #[inline]
-    fn add(self, rhs: Self) -> Self {
+    fn add(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.add(rhs.x),
-            y: self.y.add(rhs.y),
+            x: self.x.add(rhs.x.clone()),
+            y: self.y.add(rhs.y.clone()),
         }
     }
 }
 
-impl AddAssign<Vec2> for Vec2 {
+impl AddAssign<&Vec2> for Vec2 {
     #[inline]
-    fn add_assign(&mut self, rhs: Self) {
-        self.x.add_assign(rhs.x);
-        self.y.add_assign(rhs.y);
+    fn add_assign(&mut self, rhs: &Self) {
+        self.x.add_assign(rhs.x.clone());
+        self.y.add_assign(rhs.y.clone());
     }
 }
 
@@ -641,33 +641,33 @@ impl AddAssign<&Tree> for Vec2 {
     }
 }
 
-impl Add<Vec2> for &Tree {
+impl Add<&Vec2> for &Tree {
     type Output = Vec2;
     #[inline]
-    fn add(self, rhs: Vec2) -> Vec2 {
+    fn add(self, rhs: &Vec2) -> Vec2 {
         Vec2 {
-            x: self.clone().add(rhs.x),
-            y: self.clone().add(rhs.y),
+            x: self.clone().add(rhs.x.clone()),
+            y: self.clone().add(rhs.y.clone()),
         }
     }
 }
 
-impl Sub<Vec2> for Vec2 {
+impl Sub<&Vec2> for Vec2 {
     type Output = Self;
     #[inline]
-    fn sub(self, rhs: Self) -> Self {
+    fn sub(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.sub(rhs.x),
-            y: self.y.sub(rhs.y),
+            x: self.x.sub(rhs.x.clone()),
+            y: self.y.sub(rhs.y.clone()),
         }
     }
 }
 
-impl SubAssign<Vec2> for Vec2 {
+impl SubAssign<&Vec2> for Vec2 {
     #[inline]
-    fn sub_assign(&mut self, rhs: Vec2) {
-        self.x.sub_assign(rhs.x);
-        self.y.sub_assign(rhs.y);
+    fn sub_assign(&mut self, rhs: &Vec2) {
+        self.x.sub_assign(rhs.x.clone());
+        self.y.sub_assign(rhs.y.clone());
     }
 }
 
@@ -690,33 +690,33 @@ impl SubAssign<&Tree> for Vec2 {
     }
 }
 
-impl Sub<Vec2> for &Tree {
+impl Sub<&Vec2> for &Tree {
     type Output = Vec2;
     #[inline]
-    fn sub(self, rhs: Vec2) -> Vec2 {
+    fn sub(self, rhs: &Vec2) -> Vec2 {
         Vec2 {
-            x: self.clone().sub(rhs.x),
-            y: self.clone().sub(rhs.y),
+            x: self.clone().sub(rhs.x.clone()),
+            y: self.clone().sub(rhs.y.clone()),
         }
     }
 }
 
-impl Rem<Vec2> for Vec2 {
+impl Rem<&Vec2> for Vec2 {
     type Output = Self;
     #[inline]
-    fn rem(self, rhs: Self) -> Self {
+    fn rem(self, rhs: &Self) -> Self {
         Self {
-            x: self.x.modulo(rhs.x),
-            y: self.y.modulo(rhs.y),
+            x: self.x.modulo(rhs.x.clone()),
+            y: self.y.modulo(rhs.y.clone()),
         }
     }
 }
 
-impl RemAssign<Vec2> for Vec2 {
+impl RemAssign<&Vec2> for Vec2 {
     #[inline]
-    fn rem_assign(&mut self, rhs: Self) {
-        self.x = self.x.modulo(rhs.x);
-        self.y = self.y.modulo(rhs.y);
+    fn rem_assign(&mut self, rhs: &Self) {
+        self.x = self.x.modulo(rhs.x.clone());
+        self.y = self.y.modulo(rhs.y.clone());
     }
 }
 
@@ -739,13 +739,13 @@ impl RemAssign<&Tree> for Vec2 {
     }
 }
 
-impl Rem<Vec2> for &Tree {
+impl Rem<&Vec2> for &Tree {
     type Output = Vec2;
     #[inline]
-    fn rem(self, rhs: Vec2) -> Vec2 {
+    fn rem(self, rhs: &Vec2) -> Vec2 {
         Vec2 {
-            x: self.clone().modulo(rhs.x),
-            y: self.clone().modulo(rhs.y),
+            x: self.clone().modulo(rhs.x.clone()),
+            y: self.clone().modulo(rhs.y.clone()),
         }
     }
 }
@@ -772,7 +772,7 @@ impl Sum for Vec2 {
     where
         I: Iterator<Item = Self>,
     {
-        iter.fold(Self::splat(Tree::constant(0.0)), Self::add)
+        iter.fold(Self::splat(Tree::constant(0.0)), |a, b| Self::add(a, &b))
     }
 }
 
@@ -782,9 +782,7 @@ impl<'a> Sum<&'a Self> for Vec2 {
     where
         I: Iterator<Item = &'a Self>,
     {
-        iter.fold(Self::splat(Tree::constant(0.0)), |a, b| {
-            Self::add(a, b.clone())
-        })
+        iter.fold(Self::splat(Tree::constant(0.0)), |a, b| Self::add(a, b))
     }
 }
 
@@ -794,7 +792,7 @@ impl Product for Vec2 {
     where
         I: Iterator<Item = Self>,
     {
-        iter.fold(Self::splat(Tree::constant(1.0)), Self::mul)
+        iter.fold(Self::splat(Tree::constant(1.0)), |a, b| Self::mul(a, &b))
     }
 }
 
@@ -804,9 +802,7 @@ impl<'a> Product<&'a Self> for Vec2 {
     where
         I: Iterator<Item = &'a Self>,
     {
-        iter.fold(Self::splat(Tree::constant(1.0)), |a, b| {
-            Self::mul(a, b.clone())
-        })
+        iter.fold(Self::splat(Tree::constant(1.0)), |a, b| Self::mul(a, b))
     }
 }
 
