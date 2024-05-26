@@ -1,6 +1,6 @@
 [package]
 name = "fidget_math"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Luke Powers"]
 description = "glam vector types for tree construction with fidget"
