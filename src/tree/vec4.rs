@@ -109,11 +109,11 @@ impl TreeVec4 {
     ///
     /// Panics if `slice` is less than 4 elements long.
     #[inline]
-    pub fn write_to_slice(self, slice: &mut [Tree]) {
-        slice[0] = self.x;
-        slice[1] = self.y;
-        slice[2] = self.z;
-        slice[3] = self.w;
+    pub fn write_to_slice(&self, slice: &mut [Tree]) {
+        slice[0] = self.x.clone();
+        slice[1] = self.y.clone();
+        slice[2] = self.z.clone();
+        slice[3] = self.w.clone();
     }
 
     /// Creates a 3D vector from the `x`, `y` and `z` elements of `self`, discarding `w`.
@@ -121,8 +121,8 @@ impl TreeVec4 {
     /// To truncate to [`Vec3A`] use [`Vec3A::from()`].
     #[inline]
     #[must_use]
-    pub fn truncate(self) -> TreeVec3 {
-        TreeVec3::new(self.x, self.y, self.z)
+    pub fn truncate(&self) -> TreeVec3 {
+        TreeVec3::new(self.x.clone(), self.y.clone(), self.z.clone())
     }
 
     /// Creates a 4D vector from `self` with the given value of `x`.
@@ -160,17 +160,17 @@ impl TreeVec4 {
     /// Computes the dot product of `self` and `rhs`.
     #[inline]
     #[must_use]
-    pub fn dot(self, rhs: &Self) -> Tree {
-        (self.x * rhs.x.clone())
-            + (self.y * rhs.y.clone())
-            + (self.z * rhs.z.clone())
-            + (self.w * rhs.w.clone())
+    pub fn dot(&self, rhs: &Self) -> Tree {
+        (self.x.clone() * rhs.x.clone())
+            + (self.y.clone() * rhs.y.clone())
+            + (self.z.clone() * rhs.z.clone())
+            + (self.w.clone() * rhs.w.clone())
     }
 
     /// Returns a vector where every component is the dot product of `self` and `rhs`.
     #[inline]
     #[must_use]
-    pub fn dot_into_vec(self, rhs: &Self) -> Self {
+    pub fn dot_into_vec(&self, rhs: &Self) -> Self {
         Self::splat(self.dot(rhs))
     }
 
@@ -179,7 +179,7 @@ impl TreeVec4 {
     /// In other words this computes `[self.x.min(rhs.x), self.y.min(rhs.y), ..]`.
     #[inline]
     #[must_use]
-    pub fn min(self, rhs: &Self) -> Self {
+    pub fn min(&self, rhs: &Self) -> Self {
         Self {
             x: self.x.min(rhs.x.clone()),
             y: self.y.min(rhs.y.clone()),
@@ -193,7 +193,7 @@ impl TreeVec4 {
     /// In other words this computes `[self.x.max(rhs.x), self.y.max(rhs.y), ..]`.
     #[inline]
     #[must_use]
-    pub fn max(self, rhs: &Self) -> Self {
+    pub fn max(&self, rhs: &Self) -> Self {
         Self {
             x: self.x.max(rhs.x.clone()),
             y: self.y.max(rhs.y.clone()),
@@ -207,7 +207,7 @@ impl TreeVec4 {
     /// Each element in `min` must be less-or-equal to the corresponding element in `max`.
     #[inline]
     #[must_use]
-    pub fn clamp(self, min: &Self, max: &Self) -> Self {
+    pub fn clamp(&self, min: &Self, max: &Self) -> Self {
         self.max(min).min(max)
     }
 
@@ -216,8 +216,10 @@ impl TreeVec4 {
     /// In other words this computes `min(x, y, ..)`.
     #[inline]
     #[must_use]
-    pub fn min_element(self) -> Tree {
-        self.x.min(self.y.min(self.z.min(self.w)))
+    pub fn min_element(&self) -> Tree {
+        self.x
+            .clone()
+            .min(self.y.clone().min(self.z.clone().min(self.w.clone())))
     }
 
     /// Returns the horizontal maximum of `self`.
@@ -225,8 +227,10 @@ impl TreeVec4 {
     /// In other words this computes `max(x, y, ..)`.
     #[inline]
     #[must_use]
-    pub fn max_element(self) -> Tree {
-        self.x.max(self.y.max(self.z.max(self.w)))
+    pub fn max_element(&self) -> Tree {
+        self.x
+            .clone()
+            .max(self.y.clone().max(self.z.clone().max(self.w.clone())))
     }
 
     /// Returns the sum of all elements of `self`.
@@ -234,27 +238,27 @@ impl TreeVec4 {
     /// In other words, this computes `self.x + self.y + ..`.
     #[inline]
     #[must_use]
-    pub fn element_sum(self) -> Tree {
-        self.x + self.y + self.z + self.w
+    pub fn element_sum(&self) -> Tree {
+        self.x.clone() + self.y.clone() + self.z.clone() + self.w.clone()
     }
     /// Returns the product of all elements of `self`.
     ///
     /// In other words, this computes `self.x * self.y * ..`.
     #[inline]
     #[must_use]
-    pub fn element_product(self) -> Tree {
-        self.x * self.y * self.z * self.w
+    pub fn element_product(&self) -> Tree {
+        self.x.clone() * self.y.clone() * self.z.clone() * self.w.clone()
     }
 
     /// Returns a vector containing the absolute value of each element of `self`.
     #[inline]
     #[must_use]
-    pub fn abs(self) -> Self {
+    pub fn abs(&self) -> Self {
         Self {
-            x: self.x.abs(),
-            y: self.y.abs(),
-            z: self.z.abs(),
-            w: self.w.abs(),
+            x: self.x.clone().abs(),
+            y: self.y.clone().abs(),
+            z: self.z.clone().abs(),
+            w: self.w.clone().abs(),
         }
     }
 
@@ -266,13 +270,13 @@ impl TreeVec4 {
     /// - `NAN` if the number is `NAN`
     #[inline]
     #[must_use]
-    pub fn signum(self) -> Self {
+    pub fn signum(&self) -> Self {
         Self {
 
-                x: self.x.signum(),
-                y: self.y.signum(),
-                z: self.z.signum(),
-                w: self.w.signum(),
+                x: self.x.clone().signum(),
+                y: self.y.clone().signum(),
+                z: self.z.clone().signum(),
+                w: self.w.clone().signum(),
         }
     }
     */
@@ -281,8 +285,8 @@ impl TreeVec4 {
     #[doc(alias = "magnitude")]
     #[inline]
     #[must_use]
-    pub fn length(self) -> Tree {
-        self.clone().dot(&self).sqrt()
+    pub fn length(&self) -> Tree {
+        self.clone().dot(self).sqrt()
     }
 
     /// Computes the squared length of `self`.
@@ -291,8 +295,8 @@ impl TreeVec4 {
     #[doc(alias = "magnitude2")]
     #[inline]
     #[must_use]
-    pub fn length_squared(self) -> Tree {
-        self.clone().dot(&self)
+    pub fn length_squared(&self) -> Tree {
+        self.clone().dot(self)
     }
 
     /// Computes `1.0 / length()`.
@@ -300,29 +304,29 @@ impl TreeVec4 {
     /// For valid results, `self` must _not_ be of length zero.
     #[inline]
     #[must_use]
-    pub fn length_recip(self) -> Tree {
+    pub fn length_recip(&self) -> Tree {
         Tree::constant(1.0) / self.length()
     }
 
     /// Computes the Euclidean distance between two points in space.
     #[inline]
     #[must_use]
-    pub fn distance(self, rhs: &Self) -> Tree {
-        (self - rhs).length()
+    pub fn distance(&self, rhs: &Self) -> Tree {
+        (self.clone() - rhs).length()
     }
 
     /// Compute the squared euclidean distance between two points in space.
     #[inline]
     #[must_use]
-    pub fn distance_squared(self, rhs: &Self) -> Tree {
-        (self - rhs).length_squared()
+    pub fn distance_squared(&self, rhs: &Self) -> Tree {
+        (self.clone() - rhs).length_squared()
     }
 
     /*
     /// Returns the element-wise quotient of [Euclidean division] of `self` by `rhs`.
     #[inline]
     #[must_use]
-    pub fn div_euclid(self, rhs: &Self) -> Self {
+    pub fn div_euclid(&self, rhs: &Self) -> Self {
         Self::new(
 
                 self.x.div_euclid(rhs.x),
@@ -339,7 +343,7 @@ impl TreeVec4 {
     /// [Euclidean division]: Tree::rem_euclid
     #[inline]
     #[must_use]
-    pub fn rem_euclid(self, rhs: &Self) -> Self {
+    pub fn rem_euclid(&self, rhs: &Self) -> Self {
         Self::new(
 
                 self.x.rem_euclid(rhs.x),
@@ -357,7 +361,7 @@ impl TreeVec4 {
     /// See also [`Self::try_normalize()`] and [`Self::normalize_or_zero()`].
     #[inline]
     #[must_use]
-    pub fn normalize(self) -> Self {
+    pub fn normalize(&self) -> Self {
         #[allow(clippy::let_and_return)]
         let normalized = self.clone().mul(&self.length_recip());
         normalized
@@ -368,7 +372,7 @@ impl TreeVec4 {
     /// `rhs` must be of non-zero length.
     #[inline]
     #[must_use]
-    pub fn project_onto(self, rhs: &Self) -> Self {
+    pub fn project_onto(&self, rhs: &Self) -> Self {
         let other_len_sq_rcp = Tree::constant(1.0) / rhs.clone().dot(rhs);
         rhs.clone() * &self.dot(rhs) * &other_len_sq_rcp
     }
@@ -381,7 +385,7 @@ impl TreeVec4 {
     /// `rhs` must be of non-zero length.
     #[inline]
     #[must_use]
-    pub fn reject_from(self, rhs: &Self) -> Self {
+    pub fn reject_from(&self, rhs: &Self) -> Self {
         self.clone() - &self.project_onto(rhs)
     }
 
@@ -390,7 +394,7 @@ impl TreeVec4 {
     /// `rhs` must be normalized.
     #[inline]
     #[must_use]
-    pub fn project_onto_normalized(self, rhs: &Self) -> Self {
+    pub fn project_onto_normalized(&self, rhs: &Self) -> Self {
         rhs.clone() * &self.dot(rhs)
     }
 
@@ -402,7 +406,7 @@ impl TreeVec4 {
     /// `rhs` must be normalized.
     #[inline]
     #[must_use]
-    pub fn reject_from_normalized(self, rhs: &Self) -> Self {
+    pub fn reject_from_normalized(&self, rhs: &Self) -> Self {
         self.clone() - &self.project_onto_normalized(rhs)
     }
 
@@ -410,12 +414,12 @@ impl TreeVec4 {
     /// Round half-way cases away from 0.0.
     #[inline]
     #[must_use]
-    pub fn round(self) -> Self {
+    pub fn round(&self) -> Self {
         Self {
-            x: self.x.round(),
-            y: self.y.round(),
-            z: self.z.round(),
-            w: self.w.round(),
+            x: self.x.clone().round(),
+            y: self.y.clone().round(),
+            z: self.z.clone().round(),
+            w: self.w.clone().round(),
         }
     }
 
@@ -423,12 +427,12 @@ impl TreeVec4 {
     /// element of `self`.
     #[inline]
     #[must_use]
-    pub fn floor(self) -> Self {
+    pub fn floor(&self) -> Self {
         Self {
-            x: self.x.floor(),
-            y: self.y.floor(),
-            z: self.z.floor(),
-            w: self.w.floor(),
+            x: self.x.clone().floor(),
+            y: self.y.clone().floor(),
+            z: self.z.clone().floor(),
+            w: self.w.clone().floor(),
         }
     }
 
@@ -436,12 +440,12 @@ impl TreeVec4 {
     /// each element of `self`.
     #[inline]
     #[must_use]
-    pub fn ceil(self) -> Self {
+    pub fn ceil(&self) -> Self {
         Self {
-            x: self.x.ceil(),
-            y: self.y.ceil(),
-            z: self.z.ceil(),
-            w: self.w.ceil(),
+            x: self.x.clone().ceil(),
+            y: self.y.clone().ceil(),
+            z: self.z.clone().ceil(),
+            w: self.w.clone().ceil(),
         }
     }
 
@@ -450,13 +454,13 @@ impl TreeVec4 {
     /// always truncated towards zero.
     #[inline]
     #[must_use]
-    pub fn trunc(self) -> Self {
+    pub fn trunc(&self) -> Self {
         Self {
 
-                x: self.x.trunc(),
-                y: self.y.trunc(),
-                z: self.z.trunc(),
-                w: self.w.trunc(),
+                x: self.x.clone().trunc(),
+                y: self.y.clone().trunc(),
+                z: self.z.clone().trunc(),
+                w: self.w.clone().trunc(),
         }
     }
     */
@@ -470,8 +474,8 @@ impl TreeVec4 {
     /// Note that this is fast but not precise for large numbers.
     #[inline]
     #[must_use]
-    pub fn fract(self) -> Self {
-        self - self.trunc()
+    pub fn fract(&self) -> Self {
+        self.clone() - self.trunc()
     }
     */
 
@@ -483,7 +487,7 @@ impl TreeVec4 {
     /// Note that this is fast but not precise for large numbers.
     #[inline]
     #[must_use]
-    pub fn fract_gl(self) -> Self {
+    pub fn fract_gl(&self) -> Self {
         self.clone() - &self.floor()
     }
 
@@ -491,15 +495,20 @@ impl TreeVec4 {
     /// `self`.
     #[inline]
     #[must_use]
-    pub fn exp(self) -> Self {
-        Self::new(self.x.exp(), self.y.exp(), self.z.exp(), self.w.exp())
+    pub fn exp(&self) -> Self {
+        Self::new(
+            self.x.clone().exp(),
+            self.y.clone().exp(),
+            self.z.clone().exp(),
+            self.w.clone().exp(),
+        )
     }
 
     /*
     /// Returns a vector containing each element of `self` raised to the power of `n`.
     #[inline]
     #[must_use]
-    pub fn powf(self, n: Tree) -> Self {
+    pub fn powf(&self, n: Tree) -> Self {
         Self::new(
 
                 math::powf(self.x, n),
@@ -513,12 +522,12 @@ impl TreeVec4 {
     /// Returns a vector containing the reciprocal `1.0/n` of each element of `self`.
     #[inline]
     #[must_use]
-    pub fn recip(self) -> Self {
+    pub fn recip(&self) -> Self {
         Self {
-            x: Tree::constant(1.0) / self.x,
-            y: Tree::constant(1.0) / self.y,
-            z: Tree::constant(1.0) / self.z,
-            w: Tree::constant(1.0) / self.w,
+            x: Tree::constant(1.0) / self.x.clone(),
+            y: Tree::constant(1.0) / self.y.clone(),
+            z: Tree::constant(1.0) / self.z.clone(),
+            w: Tree::constant(1.0) / self.w.clone(),
         }
     }
 
@@ -530,8 +539,8 @@ impl TreeVec4 {
     #[doc(alias = "mix")]
     #[inline]
     #[must_use]
-    pub fn lerp(self, rhs: &Self, s: &Tree) -> Self {
-        self.clone() + &((rhs.clone() - &self) * s)
+    pub fn lerp(&self, rhs: &Self, s: &Tree) -> Self {
+        self.clone() + &((rhs.clone() - self) * s)
     }
 
     /// Calculates the midpoint between `self` and `rhs`.
@@ -540,8 +549,8 @@ impl TreeVec4 {
     /// `a.midpoint(b)` should yield the same result as `a.lerp(b, 0.5)`
     /// while being slightly cheaper to compute.
     #[inline]
-    pub fn midpoint(self, rhs: &Self) -> Self {
-        (self + rhs) * &Tree::constant(0.5)
+    pub fn midpoint(&self, rhs: &Self) -> Self {
+        (self.clone() + rhs) * &Tree::constant(0.5)
     }
 }
 
