@@ -41,7 +41,7 @@ fn main() -> anyhow::Result<()> {
 
     let force = matches.is_present("force");
     let stdout = matches.is_present("stdout");
-    let fmt_output = !matches.is_present("nofmt") ;
+    let fmt_output = !matches.is_present("nofmt");
     let output_path_glob = matches.value_of("GLOB");
     let check = matches.is_present("check");
     let verbose = matches.is_present("verbose");

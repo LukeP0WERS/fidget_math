@@ -1,6 +1,7 @@
 mod vec2;
 mod vec3;
 mod vec4;
+mod tree_float;
 
 pub use vec2::{vec2 as tree_vec2, Vec2 as TreeVec2};
 pub use vec3::{vec3 as tree_vec3, Vec3 as TreeVec3};

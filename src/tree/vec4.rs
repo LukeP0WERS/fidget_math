@@ -2,6 +2,7 @@
 
 #[cfg(not(target_arch = "spirv"))]
 use core::fmt;
+
 use core::iter::{Product, Sum};
 use core::ops::*;
 use fidget::context::Tree;
@@ -233,7 +234,6 @@ impl Vec4 {
     pub fn element_sum(self) -> Tree {
         self.x + self.y + self.z + self.w
     }
-
     /// Returns the product of all elements of `self`.
     ///
     /// In other words, this computes `self.x * self.y * ..`.
@@ -356,7 +356,7 @@ impl Vec4 {
     #[must_use]
     pub fn normalize(self) -> Self {
         #[allow(clippy::let_and_return)]
-        let normalized = self.clone().mul(self.length_recip());
+        let normalized = self.clone().mul(&self.length_recip());
         normalized
     }
 
@@ -367,7 +367,7 @@ impl Vec4 {
     #[must_use]
     pub fn project_onto(self, rhs: Self) -> Self {
         let other_len_sq_rcp = Tree::constant(1.0) / rhs.clone().dot(rhs.clone());
-        rhs.clone() * self.dot(rhs) * other_len_sq_rcp
+        rhs.clone() * &self.dot(rhs) * &other_len_sq_rcp
     }
 
     /// Returns the vector rejection of `self` from `rhs`.
@@ -388,7 +388,7 @@ impl Vec4 {
     #[inline]
     #[must_use]
     pub fn project_onto_normalized(self, rhs: Self) -> Self {
-        rhs.clone() * self.dot(rhs)
+        rhs.clone() * &self.dot(rhs)
     }
 
     /// Returns the vector rejection of `self` from `rhs`.
@@ -527,7 +527,7 @@ impl Vec4 {
     #[doc(alias = "mix")]
     #[inline]
     #[must_use]
-    pub fn lerp(self, rhs: Self, s: Tree) -> Self {
+    pub fn lerp(self, rhs: Self, s: &Tree) -> Self {
         self.clone() + ((rhs - self) * s)
     }
 
@@ -538,7 +538,7 @@ impl Vec4 {
     /// while being slightly cheaper to compute.
     #[inline]
     pub fn midpoint(self, rhs: Self) -> Self {
-        (self + rhs) * Tree::constant(0.5)
+        (self + rhs) * &Tree::constant(0.5)
     }
 }
 
@@ -572,10 +572,10 @@ impl DivAssign<Vec4> for Vec4 {
     }
 }
 
-impl Div<Tree> for Vec4 {
+impl Div<&Tree> for Vec4 {
     type Output = Self;
     #[inline]
-    fn div(self, rhs: Tree) -> Self {
+    fn div(self, rhs: &Tree) -> Self {
         Self {
             x: self.x.div(rhs.clone()),
             y: self.y.div(rhs.clone()),
@@ -585,9 +585,9 @@ impl Div<Tree> for Vec4 {
     }
 }
 
-impl DivAssign<Tree> for Vec4 {
+impl DivAssign<&Tree> for Vec4 {
     #[inline]
-    fn div_assign(&mut self, rhs: Tree) {
+    fn div_assign(&mut self, rhs: &Tree) {
         self.x.div_assign(rhs.clone());
         self.y.div_assign(rhs.clone());
         self.z.div_assign(rhs.clone());
@@ -595,7 +595,7 @@ impl DivAssign<Tree> for Vec4 {
     }
 }
 
-impl Div<Vec4> for Tree {
+impl Div<Vec4> for &Tree {
     type Output = Vec4;
     #[inline]
     fn div(self, rhs: Vec4) -> Vec4 {
@@ -631,10 +631,10 @@ impl MulAssign<Vec4> for Vec4 {
     }
 }
 
-impl Mul<Tree> for Vec4 {
+impl Mul<&Tree> for Vec4 {
     type Output = Self;
     #[inline]
-    fn mul(self, rhs: Tree) -> Self {
+    fn mul(self, rhs: &Tree) -> Self {
         Self {
             x: self.x.mul(rhs.clone()),
             y: self.y.mul(rhs.clone()),
@@ -644,9 +644,9 @@ impl Mul<Tree> for Vec4 {
     }
 }
 
-impl MulAssign<Tree> for Vec4 {
+impl MulAssign<&Tree> for Vec4 {
     #[inline]
-    fn mul_assign(&mut self, rhs: Tree) {
+    fn mul_assign(&mut self, rhs: &Tree) {
         self.x.mul_assign(rhs.clone());
         self.y.mul_assign(rhs.clone());
         self.z.mul_assign(rhs.clone());
@@ -654,7 +654,7 @@ impl MulAssign<Tree> for Vec4 {
     }
 }
 
-impl Mul<Vec4> for Tree {
+impl Mul<Vec4> for &Tree {
     type Output = Vec4;
     #[inline]
     fn mul(self, rhs: Vec4) -> Vec4 {
@@ -690,10 +690,10 @@ impl AddAssign<Vec4> for Vec4 {
     }
 }
 
-impl Add<Tree> for Vec4 {
+impl Add<&Tree> for Vec4 {
     type Output = Self;
     #[inline]
-    fn add(self, rhs: Tree) -> Self {
+    fn add(self, rhs: &Tree) -> Self {
         Self {
             x: self.x.add(rhs.clone()),
             y: self.y.add(rhs.clone()),
@@ -703,9 +703,9 @@ impl Add<Tree> for Vec4 {
     }
 }
 
-impl AddAssign<Tree> for Vec4 {
+impl AddAssign<&Tree> for Vec4 {
     #[inline]
-    fn add_assign(&mut self, rhs: Tree) {
+    fn add_assign(&mut self, rhs: &Tree) {
         self.x.add_assign(rhs.clone());
         self.y.add_assign(rhs.clone());
         self.z.add_assign(rhs.clone());
@@ -713,7 +713,7 @@ impl AddAssign<Tree> for Vec4 {
     }
 }
 
-impl Add<Vec4> for Tree {
+impl Add<Vec4> for &Tree {
     type Output = Vec4;
     #[inline]
     fn add(self, rhs: Vec4) -> Vec4 {
@@ -749,10 +749,10 @@ impl SubAssign<Vec4> for Vec4 {
     }
 }
 
-impl Sub<Tree> for Vec4 {
+impl Sub<&Tree> for Vec4 {
     type Output = Self;
     #[inline]
-    fn sub(self, rhs: Tree) -> Self {
+    fn sub(self, rhs: &Tree) -> Self {
         Self {
             x: self.x.sub(rhs.clone()),
             y: self.y.sub(rhs.clone()),
@@ -762,9 +762,9 @@ impl Sub<Tree> for Vec4 {
     }
 }
 
-impl SubAssign<Tree> for Vec4 {
+impl SubAssign<&Tree> for Vec4 {
     #[inline]
-    fn sub_assign(&mut self, rhs: Tree) {
+    fn sub_assign(&mut self, rhs: &Tree) {
         self.x.sub_assign(rhs.clone());
         self.y.sub_assign(rhs.clone());
         self.z.sub_assign(rhs.clone());
@@ -772,7 +772,7 @@ impl SubAssign<Tree> for Vec4 {
     }
 }
 
-impl Sub<Vec4> for Tree {
+impl Sub<Vec4> for &Tree {
     type Output = Vec4;
     #[inline]
     fn sub(self, rhs: Vec4) -> Vec4 {
@@ -808,10 +808,10 @@ impl RemAssign<Vec4> for Vec4 {
     }
 }
 
-impl Rem<Tree> for Vec4 {
+impl Rem<&Tree> for Vec4 {
     type Output = Self;
     #[inline]
-    fn rem(self, rhs: Tree) -> Self {
+    fn rem(self, rhs: &Tree) -> Self {
         Self {
             x: self.x.modulo(rhs.clone()),
             y: self.y.modulo(rhs.clone()),
@@ -821,9 +821,9 @@ impl Rem<Tree> for Vec4 {
     }
 }
 
-impl RemAssign<Tree> for Vec4 {
+impl RemAssign<&Tree> for Vec4 {
     #[inline]
-    fn rem_assign(&mut self, rhs: Tree) {
+    fn rem_assign(&mut self, rhs: &Tree) {
         self.x = self.x.modulo(rhs.clone());
         self.y = self.y.modulo(rhs.clone());
         self.z = self.z.modulo(rhs.clone());
@@ -831,7 +831,7 @@ impl RemAssign<Tree> for Vec4 {
     }
 }
 
-impl Rem<Vec4> for Tree {
+impl Rem<Vec4> for &Tree {
     type Output = Vec4;
     #[inline]
     fn rem(self, rhs: Vec4) -> Vec4 {

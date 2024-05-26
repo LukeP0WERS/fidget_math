@@ -3,126 +3,59 @@
 #[cfg(not(target_arch = "spirv"))]
 use core::fmt;
 
-use core::iter::{Product, Sum};
 use core::ops::*;
 use fidget::context::Tree;
 
-use super::vec2::Vec2;
-
-use super::vec4::Vec4;
-
-/// Creates a 3-dimensional vector.
-#[inline(always)]
-#[must_use]
-pub fn vec3(x: Tree, y: Tree, z: Tree) -> Vec3 {
-    Vec3::new(x, y, z)
-}
-
-/// A 3-dimensional vector.
+/// Wrapper around the Tree type which reduces the amount of cloning needed.
 #[derive(Clone, PartialEq)]
-pub struct Vec3 {
+pub struct TreeFloat {
     pub x: Tree,
-    pub y: Tree,
-    pub z: Tree,
 }
 
-impl Vec3 {
+impl TreeFloat {
     /// Creates a new vector.
     #[inline(always)]
     #[must_use]
-    pub fn new(x: impl Into<Tree>, y: impl Into<Tree>, z: impl Into<Tree>) -> Self {
-        Self {
-            x: x.into(),
-            y: y.into(),
-            z: z.into(),
-        }
-    }
-
-    /// Creates a vector with all elements set to `v`.
-    #[inline]
-    #[must_use]
-    pub fn splat(v: impl Into<Tree> + Clone) -> Self {
-        Self {
-            x: v.clone().into(),
-
-            y: v.clone().into(),
-
-            z: v.clone().into(),
-        }
+    pub fn new(x: impl Into<Tree>) -> Self {
+        Self { x: x.into() }
     }
 
     /// Creates a new vector from an array.
     #[inline]
     #[must_use]
-    pub fn from_array(a: [impl Into<Tree> + Clone; 3]) -> Self {
-        Self::new(
-            a[0].clone().into(),
-            a[1].clone().into(),
-            a[2].clone().into(),
-        )
+    pub fn from_array(a: [impl Into<Tree> + Clone; 1]) -> Self {
+        Self::new(a[0].clone().into())
     }
 
-    /// `[x, y, z]`
+    /// `[x]`
     #[inline]
     #[must_use]
-    pub fn to_array(&self) -> [Tree; 3] {
-        [self.x.clone(), self.y.clone(), self.z.clone()]
+    pub fn to_array(&self) -> [Tree; 1] {
+        [self.x.clone()]
     }
 
-    /// Creates a vector from the first 3 values in `slice`.
+    /// Creates a vector from the first 1 values in `slice`.
     ///
     /// # Panics
     ///
-    /// Panics if `slice` is less than 3 elements long.
+    /// Panics if `slice` is less than 1 elements long.
     #[inline]
     #[must_use]
     pub fn from_slice(slice: &[impl Into<Tree> + Clone]) -> Self {
-        Self::new(
-            slice[0].clone().into(),
-            slice[1].clone().into(),
-            slice[2].clone().into(),
-        )
+        Self::new(slice[0].clone().into())
     }
 
-    /// Writes the elements of `self` to the first 3 elements in `slice`.
+    /// Writes the elements of `self` to the first 1 elements in `slice`.
     ///
     /// # Panics
     ///
-    /// Panics if `slice` is less than 3 elements long.
+    /// Panics if `slice` is less than 1 elements long.
     #[inline]
     pub fn write_to_slice(self, slice: &mut [Tree]) {
         slice[0] = self.x;
-        slice[1] = self.y;
-        slice[2] = self.z;
     }
 
-    /// Internal method for creating a 3D vector from a 4D vector, discarding `w`.
-    #[allow(dead_code)]
-    #[inline]
-    #[must_use]
-    pub(crate) fn from_vec4(v: Vec4) -> Self {
-        Self {
-            x: v.x,
-            y: v.y,
-            z: v.z,
-        }
-    }
-
-    /// Creates a 4D vector from `self` and the given `w` value.
-    #[inline]
-    #[must_use]
-    pub fn extend(self, w: impl Into<Tree>) -> Vec4 {
-        Vec4::new(self.x, self.y, self.z, w.into())
-    }
-
-    /// Creates a 2D vector from the `x` and `y` elements of `self`, discarding `z`.
-    #[inline]
-    #[must_use]
-    pub fn truncate(self) -> Vec2 {
-        Vec2::new(self.x, self.y)
-    }
-
-    /// Creates a 3D vector from `self` with the given value of `x`.
+    /// Creates a 1D vector from `self` with the given value of `x`.
     #[inline]
     #[must_use]
     pub fn with_x(mut self, x: impl Into<Tree>) -> Self {
@@ -130,45 +63,11 @@ impl Vec3 {
         self
     }
 
-    /// Creates a 3D vector from `self` with the given value of `y`.
-    #[inline]
-    #[must_use]
-    pub fn with_y(mut self, y: impl Into<Tree>) -> Self {
-        self.y = y.into();
-        self
-    }
-
-    /// Creates a 3D vector from `self` with the given value of `z`.
-    #[inline]
-    #[must_use]
-    pub fn with_z(mut self, z: impl Into<Tree>) -> Self {
-        self.z = z.into();
-        self
-    }
-
     /// Computes the dot product of `self` and `rhs`.
     #[inline]
     #[must_use]
     pub fn dot(self, rhs: Self) -> Tree {
-        (self.x * rhs.x) + (self.y * rhs.y) + (self.z * rhs.z)
-    }
-
-    /// Returns a vector where every component is the dot product of `self` and `rhs`.
-    #[inline]
-    #[must_use]
-    pub fn dot_into_vec(self, rhs: Self) -> Self {
-        Self::splat(self.dot(rhs))
-    }
-
-    /// Computes the cross product of `self` and `rhs`.
-    #[inline]
-    #[must_use]
-    pub fn cross(self, rhs: Self) -> Self {
-        Self {
-            x: self.y.clone() * rhs.z.clone() - rhs.y.clone() * self.z.clone(),
-            y: self.z.clone() * rhs.x.clone() - rhs.z.clone() * self.x.clone(),
-            z: self.x.clone() * rhs.y.clone() - rhs.x.clone() * self.y.clone(),
-        }
+        self.x * rhs.x
     }
 
     /// Returns a vector containing the minimum values for each element of `self` and `rhs`.
@@ -179,8 +78,6 @@ impl Vec3 {
     pub fn min(self, rhs: Self) -> Self {
         Self {
             x: self.x.min(rhs.x),
-            y: self.y.min(rhs.y),
-            z: self.z.min(rhs.z),
         }
     }
 
@@ -192,8 +89,6 @@ impl Vec3 {
     pub fn max(self, rhs: Self) -> Self {
         Self {
             x: self.x.max(rhs.x),
-            y: self.y.max(rhs.y),
-            z: self.z.max(rhs.z),
         }
     }
 
@@ -206,50 +101,11 @@ impl Vec3 {
         self.max(min).min(max)
     }
 
-    /// Returns the horizontal minimum of `self`.
-    ///
-    /// In other words this computes `min(x, y, ..)`.
-    #[inline]
-    #[must_use]
-    pub fn min_element(self) -> Tree {
-        self.x.min(self.y.min(self.z))
-    }
-
-    /// Returns the horizontal maximum of `self`.
-    ///
-    /// In other words this computes `max(x, y, ..)`.
-    #[inline]
-    #[must_use]
-    pub fn max_element(self) -> Tree {
-        self.x.max(self.y.max(self.z))
-    }
-
-    /// Returns the sum of all elements of `self`.
-    ///
-    /// In other words, this computes `self.x + self.y + ..`.
-    #[inline]
-    #[must_use]
-    pub fn element_sum(self) -> Tree {
-        self.x + self.y + self.z
-    }
-    /// Returns the product of all elements of `self`.
-    ///
-    /// In other words, this computes `self.x * self.y * ..`.
-    #[inline]
-    #[must_use]
-    pub fn element_product(self) -> Tree {
-        self.x * self.y * self.z
-    }
-
     /// Returns a vector containing the absolute value of each element of `self`.
     #[inline]
     #[must_use]
     pub fn abs(self) -> Self {
-        Self {
-            x: self.x.abs(),
-            y: self.y.abs(),
-            z: self.z.abs(),
-        }
+        Self { x: self.x.abs() }
     }
 
     /*
@@ -264,8 +120,6 @@ impl Vec3 {
         Self {
 
                 x: self.x.signum(),
-                y: self.y.signum(),
-                z: self.z.signum(),
         }
     }
     */
@@ -319,8 +173,6 @@ impl Vec3 {
         Self::new(
 
                 self.x.div_euclid(rhs.x),
-                self.y.div_euclid(rhs.y),
-                self.z.div_euclid(rhs.z),
         )
     }
     */
@@ -335,8 +187,6 @@ impl Vec3 {
         Self::new(
 
                 self.x.rem_euclid(rhs.x),
-                self.y.rem_euclid(rhs.y),
-                self.z.rem_euclid(rhs.z),
         )
     }
     */
@@ -402,11 +252,7 @@ impl Vec3 {
     #[inline]
     #[must_use]
     pub fn round(self) -> Self {
-        Self {
-            x: self.x.round(),
-            y: self.y.round(),
-            z: self.z.round(),
-        }
+        Self { x: self.x.round() }
     }
 
     /// Returns a vector containing the largest integer less than or equal to a number for each
@@ -414,11 +260,7 @@ impl Vec3 {
     #[inline]
     #[must_use]
     pub fn floor(self) -> Self {
-        Self {
-            x: self.x.floor(),
-            y: self.y.floor(),
-            z: self.z.floor(),
-        }
+        Self { x: self.x.floor() }
     }
 
     /// Returns a vector containing the smallest integer greater than or equal to a number for
@@ -426,11 +268,7 @@ impl Vec3 {
     #[inline]
     #[must_use]
     pub fn ceil(self) -> Self {
-        Self {
-            x: self.x.ceil(),
-            y: self.y.ceil(),
-            z: self.z.ceil(),
-        }
+        Self { x: self.x.ceil() }
     }
 
     /*
@@ -442,8 +280,6 @@ impl Vec3 {
         Self {
 
                 x: self.x.trunc(),
-                y: self.y.trunc(),
-                z: self.z.trunc(),
         }
     }
     */
@@ -479,7 +315,7 @@ impl Vec3 {
     #[inline]
     #[must_use]
     pub fn exp(self) -> Self {
-        Self::new(self.x.exp(), self.y.exp(), self.z.exp())
+        Self::new(self.x.exp())
     }
 
     /*
@@ -490,8 +326,6 @@ impl Vec3 {
         Self::new(
 
                 math::powf(self.x, n),
-                math::powf(self.y, n),
-                math::powf(self.z, n),
         )
     }
     */
@@ -502,8 +336,6 @@ impl Vec3 {
     pub fn recip(self) -> Self {
         Self {
             x: Tree::constant(1.0) / self.x,
-            y: Tree::constant(1.0) / self.y,
-            z: Tree::constant(1.0) / self.z,
         }
     }
 
@@ -530,422 +362,285 @@ impl Vec3 {
     }
 }
 
-impl Default for Vec3 {
+impl Default for TreeFloat {
     #[inline(always)]
     fn default() -> Self {
-        Self::splat(Tree::constant(0.0))
+        Self::new(Tree::constant(0.0))
     }
 }
 
-impl Div<Vec3> for Vec3 {
+impl Div<TreeFloat> for TreeFloat {
     type Output = Self;
     #[inline]
     fn div(self, rhs: Self) -> Self {
         Self {
             x: self.x.div(rhs.x),
-            y: self.y.div(rhs.y),
-            z: self.z.div(rhs.z),
         }
     }
 }
 
-impl DivAssign<Vec3> for Vec3 {
+impl DivAssign<TreeFloat> for TreeFloat {
     #[inline]
     fn div_assign(&mut self, rhs: Self) {
         self.x.div_assign(rhs.x);
-        self.y.div_assign(rhs.y);
-        self.z.div_assign(rhs.z);
     }
 }
 
-impl Div<&Tree> for Vec3 {
+impl Div<&Tree> for TreeFloat {
     type Output = Self;
     #[inline]
     fn div(self, rhs: &Tree) -> Self {
         Self {
             x: self.x.div(rhs.clone()),
-            y: self.y.div(rhs.clone()),
-            z: self.z.div(rhs.clone()),
         }
     }
 }
 
-impl DivAssign<&Tree> for Vec3 {
+impl DivAssign<&Tree> for TreeFloat {
     #[inline]
     fn div_assign(&mut self, rhs: &Tree) {
         self.x.div_assign(rhs.clone());
-        self.y.div_assign(rhs.clone());
-        self.z.div_assign(rhs.clone());
     }
 }
 
-impl Div<Vec3> for &Tree {
-    type Output = Vec3;
-    #[inline]
-    fn div(self, rhs: Vec3) -> Vec3 {
-        Vec3 {
-            x: self.clone().div(rhs.x),
-            y: self.clone().div(rhs.y),
-            z: self.clone().div(rhs.z),
-        }
-    }
-}
-
-impl Mul<Vec3> for Vec3 {
+impl Mul<TreeFloat> for TreeFloat {
     type Output = Self;
     #[inline]
     fn mul(self, rhs: Self) -> Self {
         Self {
             x: self.x.mul(rhs.x),
-            y: self.y.mul(rhs.y),
-            z: self.z.mul(rhs.z),
         }
     }
 }
 
-impl MulAssign<Vec3> for Vec3 {
+impl MulAssign<TreeFloat> for TreeFloat {
     #[inline]
     fn mul_assign(&mut self, rhs: Self) {
         self.x.mul_assign(rhs.x);
-        self.y.mul_assign(rhs.y);
-        self.z.mul_assign(rhs.z);
     }
 }
 
-impl Mul<&Tree> for Vec3 {
+impl Mul<&Tree> for TreeFloat {
     type Output = Self;
     #[inline]
     fn mul(self, rhs: &Tree) -> Self {
         Self {
             x: self.x.mul(rhs.clone()),
-            y: self.y.mul(rhs.clone()),
-            z: self.z.mul(rhs.clone()),
         }
     }
 }
 
-impl MulAssign<&Tree> for Vec3 {
+impl MulAssign<&Tree> for TreeFloat {
     #[inline]
     fn mul_assign(&mut self, rhs: &Tree) {
         self.x.mul_assign(rhs.clone());
-        self.y.mul_assign(rhs.clone());
-        self.z.mul_assign(rhs.clone());
     }
 }
 
-impl Mul<Vec3> for &Tree {
-    type Output = Vec3;
-    #[inline]
-    fn mul(self, rhs: Vec3) -> Vec3 {
-        Vec3 {
-            x: self.clone().mul(rhs.x),
-            y: self.clone().mul(rhs.y),
-            z: self.clone().mul(rhs.z),
-        }
-    }
-}
-
-impl Add<Vec3> for Vec3 {
+impl Add<TreeFloat> for TreeFloat {
     type Output = Self;
     #[inline]
     fn add(self, rhs: Self) -> Self {
         Self {
             x: self.x.add(rhs.x),
-            y: self.y.add(rhs.y),
-            z: self.z.add(rhs.z),
         }
     }
 }
 
-impl AddAssign<Vec3> for Vec3 {
+impl AddAssign<TreeFloat> for TreeFloat {
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
         self.x.add_assign(rhs.x);
-        self.y.add_assign(rhs.y);
-        self.z.add_assign(rhs.z);
     }
 }
 
-impl Add<&Tree> for Vec3 {
+impl Add<&Tree> for TreeFloat {
     type Output = Self;
     #[inline]
     fn add(self, rhs: &Tree) -> Self {
         Self {
             x: self.x.add(rhs.clone()),
-            y: self.y.add(rhs.clone()),
-            z: self.z.add(rhs.clone()),
         }
     }
 }
 
-impl AddAssign<&Tree> for Vec3 {
+impl AddAssign<&Tree> for TreeFloat {
     #[inline]
     fn add_assign(&mut self, rhs: &Tree) {
         self.x.add_assign(rhs.clone());
-        self.y.add_assign(rhs.clone());
-        self.z.add_assign(rhs.clone());
     }
 }
 
-impl Add<Vec3> for &Tree {
-    type Output = Vec3;
-    #[inline]
-    fn add(self, rhs: Vec3) -> Vec3 {
-        Vec3 {
-            x: self.clone().add(rhs.x),
-            y: self.clone().add(rhs.y),
-            z: self.clone().add(rhs.z),
-        }
-    }
-}
-
-impl Sub<Vec3> for Vec3 {
+impl Sub<TreeFloat> for TreeFloat {
     type Output = Self;
     #[inline]
     fn sub(self, rhs: Self) -> Self {
         Self {
             x: self.x.sub(rhs.x),
-            y: self.y.sub(rhs.y),
-            z: self.z.sub(rhs.z),
         }
     }
 }
 
-impl SubAssign<Vec3> for Vec3 {
+impl SubAssign<TreeFloat> for TreeFloat {
     #[inline]
-    fn sub_assign(&mut self, rhs: Vec3) {
+    fn sub_assign(&mut self, rhs: TreeFloat) {
         self.x.sub_assign(rhs.x);
-        self.y.sub_assign(rhs.y);
-        self.z.sub_assign(rhs.z);
     }
 }
 
-impl Sub<&Tree> for Vec3 {
+impl Sub<&Tree> for TreeFloat {
     type Output = Self;
     #[inline]
     fn sub(self, rhs: &Tree) -> Self {
         Self {
             x: self.x.sub(rhs.clone()),
-            y: self.y.sub(rhs.clone()),
-            z: self.z.sub(rhs.clone()),
         }
     }
 }
 
-impl SubAssign<&Tree> for Vec3 {
+impl SubAssign<&Tree> for TreeFloat {
     #[inline]
     fn sub_assign(&mut self, rhs: &Tree) {
         self.x.sub_assign(rhs.clone());
-        self.y.sub_assign(rhs.clone());
-        self.z.sub_assign(rhs.clone());
     }
 }
 
-impl Sub<Vec3> for &Tree {
-    type Output = Vec3;
-    #[inline]
-    fn sub(self, rhs: Vec3) -> Vec3 {
-        Vec3 {
-            x: self.clone().sub(rhs.x),
-            y: self.clone().sub(rhs.y),
-            z: self.clone().sub(rhs.z),
-        }
-    }
-}
-
-impl Rem<Vec3> for Vec3 {
+impl Rem<TreeFloat> for TreeFloat {
     type Output = Self;
     #[inline]
     fn rem(self, rhs: Self) -> Self {
         Self {
             x: self.x.modulo(rhs.x),
-            y: self.y.modulo(rhs.y),
-            z: self.z.modulo(rhs.z),
         }
     }
 }
 
-impl RemAssign<Vec3> for Vec3 {
+impl RemAssign<TreeFloat> for TreeFloat {
     #[inline]
     fn rem_assign(&mut self, rhs: Self) {
         self.x = self.x.modulo(rhs.x);
-        self.y = self.y.modulo(rhs.y);
-        self.z = self.z.modulo(rhs.z);
     }
 }
 
-impl Rem<&Tree> for Vec3 {
+impl Rem<&Tree> for TreeFloat {
     type Output = Self;
     #[inline]
     fn rem(self, rhs: &Tree) -> Self {
         Self {
             x: self.x.modulo(rhs.clone()),
-            y: self.y.modulo(rhs.clone()),
-            z: self.z.modulo(rhs.clone()),
         }
     }
 }
 
-impl RemAssign<&Tree> for Vec3 {
+impl RemAssign<&Tree> for TreeFloat {
     #[inline]
     fn rem_assign(&mut self, rhs: &Tree) {
         self.x = self.x.modulo(rhs.clone());
-        self.y = self.y.modulo(rhs.clone());
-        self.z = self.z.modulo(rhs.clone());
     }
 }
 
-impl Rem<Vec3> for &Tree {
-    type Output = Vec3;
+impl Rem<TreeFloat> for &Tree {
+    type Output = TreeFloat;
     #[inline]
-    fn rem(self, rhs: Vec3) -> Vec3 {
-        Vec3 {
+    fn rem(self, rhs: TreeFloat) -> TreeFloat {
+        TreeFloat {
             x: self.clone().modulo(rhs.x),
-            y: self.clone().modulo(rhs.y),
-            z: self.clone().modulo(rhs.z),
         }
     }
 }
 
 #[cfg(not(target_arch = "spirv"))]
-impl AsRef<[Tree; 3]> for Vec3 {
+impl AsRef<[Tree; 1]> for TreeFloat {
     #[inline]
-    fn as_ref(&self) -> &[Tree; 3] {
-        unsafe { &*(self as *const Vec3 as *const [Tree; 3]) }
+    fn as_ref(&self) -> &[Tree; 1] {
+        unsafe { &*(self as *const TreeFloat as *const [Tree; 1]) }
     }
 }
 
 #[cfg(not(target_arch = "spirv"))]
-impl AsMut<[Tree; 3]> for Vec3 {
+impl AsMut<[Tree; 1]> for TreeFloat {
     #[inline]
-    fn as_mut(&mut self) -> &mut [Tree; 3] {
-        unsafe { &mut *(self as *mut Vec3 as *mut [Tree; 3]) }
+    fn as_mut(&mut self) -> &mut [Tree; 1] {
+        unsafe { &mut *(self as *mut TreeFloat as *mut [Tree; 1]) }
     }
 }
 
-impl Sum for Vec3 {
-    #[inline]
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = Self>,
-    {
-        iter.fold(Self::splat(Tree::constant(0.0)), Self::add)
-    }
-}
-
-impl<'a> Sum<&'a Self> for Vec3 {
-    #[inline]
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a Self>,
-    {
-        iter.fold(Self::splat(Tree::constant(0.0)), |a, b| {
-            Self::add(a, b.clone())
-        })
-    }
-}
-
-impl Product for Vec3 {
-    #[inline]
-    fn product<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = Self>,
-    {
-        iter.fold(Self::splat(Tree::constant(1.0)), Self::mul)
-    }
-}
-
-impl<'a> Product<&'a Self> for Vec3 {
-    #[inline]
-    fn product<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a Self>,
-    {
-        iter.fold(Self::splat(Tree::constant(1.0)), |a, b| {
-            Self::mul(a, b.clone())
-        })
-    }
-}
-
-impl Neg for Vec3 {
+impl Neg for TreeFloat {
     type Output = Self;
     #[inline]
     fn neg(self) -> Self {
-        Self {
-            x: self.x.neg(),
-            y: self.y.neg(),
-            z: self.z.neg(),
-        }
+        Self { x: self.x.neg() }
     }
 }
 
-impl Index<usize> for Vec3 {
+impl Index<usize> for TreeFloat {
     type Output = Tree;
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
         match index {
             0 => &self.x,
-            1 => &self.y,
-            2 => &self.z,
             _ => panic!("index out of bounds"),
         }
     }
 }
 
-impl IndexMut<usize> for Vec3 {
+impl IndexMut<usize> for TreeFloat {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         match index {
             0 => &mut self.x,
-            1 => &mut self.y,
-            2 => &mut self.z,
             _ => panic!("index out of bounds"),
         }
     }
 }
 
 #[cfg(not(target_arch = "spirv"))]
-impl fmt::Debug for Vec3 {
+impl fmt::Debug for TreeFloat {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt.debug_tuple(stringify!(Vec3))
+        fmt.debug_tuple(stringify!(TreeFloat))
             .field(&self.x)
-            .field(&self.y)
-            .field(&self.z)
             .finish()
     }
 }
 
-impl From<[Tree; 3]> for Vec3 {
+impl From<[Tree; 1]> for TreeFloat {
     #[inline]
-    fn from(a: [Tree; 3]) -> Self {
-        Self::new(a[0].clone(), a[1].clone(), a[2].clone())
+    fn from(a: [Tree; 1]) -> Self {
+        Self::new(a[0].clone())
     }
 }
 
-impl From<Vec3> for [Tree; 3] {
+impl From<TreeFloat> for [Tree; 1] {
     #[inline]
-    fn from(v: Vec3) -> Self {
-        [v.x, v.y, v.z]
+    fn from(v: TreeFloat) -> Self {
+        [v.x]
     }
 }
 
-impl From<(Tree, Tree, Tree)> for Vec3 {
+impl From<(Tree,)> for TreeFloat {
     #[inline]
-    fn from(t: (Tree, Tree, Tree)) -> Self {
-        Self::new(t.0, t.1, t.2)
+    fn from(t: (Tree,)) -> Self {
+        Self::new(t.0)
     }
 }
 
-impl From<Vec3> for (Tree, Tree, Tree) {
+impl From<TreeFloat> for (Tree,) {
     #[inline]
-    fn from(v: Vec3) -> Self {
-        (v.x, v.y, v.z)
+    fn from(v: TreeFloat) -> Self {
+        (v.x,)
     }
 }
 
-impl From<(Vec2, Tree)> for Vec3 {
+impl From<Tree> for TreeFloat {
     #[inline]
-    fn from((v, z): (Vec2, Tree)) -> Self {
-        Self::new(v.x, v.y, z)
+    fn from(t: Tree) -> Self {
+        Self::new(t)
+    }
+}
+
+impl From<TreeFloat> for Tree {
+    #[inline]
+    fn from(v: TreeFloat) -> Self {
+        v.x
     }
 }

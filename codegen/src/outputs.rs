@@ -14,6 +14,10 @@ impl ContextBuilder {
             .with_is_align(false)
     }
 
+    pub fn new_tree_float() -> Self {
+        Self::new_vecn(1).with_tree().with_is_float()
+    }
+
     pub fn new_vec2() -> Self {
         Self::new_vecn(2).with_tree()
     }
@@ -33,6 +37,12 @@ impl ContextBuilder {
 
     pub fn with_tree(mut self) -> Self {
         self.0.insert("scalar_t", "Tree");
+        self.0.insert("scalar_t_ref", "&Tree");
+        self
+    }
+
+    pub fn with_is_float(mut self) -> Self {
+        self.0.insert("is_float", &true);
         self
     }
 
@@ -53,6 +63,7 @@ impl ContextBuilder {
 
 pub fn build_output_pairs() -> HashMap<&'static str, tera::Context> {
     HashMap::from([
+        ("src/tree/tree_float.rs", ContextBuilder::new_tree_float().build()),
         ("src/tree/vec2.rs", ContextBuilder::new_vec2().build()),
         ("src/tree/vec3.rs", ContextBuilder::new_vec3().build()),
         ("src/tree/vec4.rs", ContextBuilder::new_vec4().build()),
