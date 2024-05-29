@@ -9,7 +9,7 @@ license = "MIT"
 readme = "README.md"
 
 [dependencies]
-fidget = "0.3.0"
+fidget = "0.3"
 
 [workspace]
 members = [
