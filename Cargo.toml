@@ -9,7 +9,7 @@ license = "MIT"
 readme = "README.md"
 
 [dependencies]
-fidget = "0.3"
+fidget = { git = "https://github.com/mkeeter/fidget.git", branch = "x86-grad-bad-r8" } #"0.3"
 
 [workspace]
 members = [

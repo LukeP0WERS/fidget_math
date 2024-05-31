@@ -2,21 +2,12 @@
 
 // Generated from {{template_path}} template. Edit the template, not the generated file.
 
-{% if is_float %}
-    {% set self_t = "TreeFloat" %}
-    {% set self_t_ref = "&TreeFloat" %}
-{% elif scalar_t == "Tree" %}
+{% if scalar_t == "Tree" %}
     {% set self_t = "TreeVec" ~ dim %}
-    {% set self_t_ref = "&TreeVec" ~ dim %}
+    {% set vec2_t = "TreeVec2" %}
+    {% set vec3_t = "TreeVec3" %}
+    {% set vec4_t = "TreeVec4" %}
 {% endif %}
-
-{% set scalar_t_ref = "&Tree" %}
-{% set vec2_t = "TreeVec2" %}
-{% set vec3_t = "TreeVec3" %}
-{% set vec4_t = "TreeVec4" %}
-{% set vec2_t_ref = "&TreeVec2" %}
-{% set vec3_t_ref = "&TreeVec3" %}
-{% set vec4_t_ref = "&TreeVec4" %}
 
 {% if dim == 2 %}
     {% set cuda_align = 8 %}
@@ -28,25 +19,20 @@
 
 #[cfg(not(target_arch = "spirv"))]
 use core::fmt;
-{% if not is_float %}
 use core::iter::{Product, Sum};
-{%- endif %}
 use core::ops::*;
 use fidget::context::Tree;
 
-{% if not is_float %}
-    {% if dim != 2 %}
-    use super::vec2::{{ vec2_t }};
-    {% endif %}
-    {% if dim == 3 %}
-    use super::vec4::{{ vec4_t }};
-    {% endif %}
-    {% if dim != 3 %}
-    use super::vec3::{{ vec3_t }};
-    {% endif %}
+{% if dim != 2 %}
+use super::vec2::{{ vec2_t }};
+{% endif %}
+{% if dim == 3 %}
+use super::vec4::{{ vec4_t }};
+{% endif %}
+{% if dim != 3 %}
+use super::vec3::{{ vec3_t }};
 {% endif %}
 
-{% if not is_float %}
 /// Creates a {{ dim }}-dimensional vector.
 #[inline(always)]
 #[must_use]
@@ -57,13 +43,8 @@ pub fn {{ self_t | lower }}(
 ) -> {{ self_t }} {
     {{ self_t }}::new({{ components | join(sep=",") }})
 }
-{% endif %}
 
-{% if is_float %}
-/// Wrapper around the Tree type which reduces the amount of cloning needed.
-{%- else %}
 /// A {{ dim }}-dimensional vector.
-{%- endif %}
 #[derive(
     Clone,
     PartialEq,
@@ -91,7 +72,6 @@ impl {{ self_t }} {
         }
     }
 
-    {% if not is_float %}
     /// Creates a vector with all elements set to `v`.
     #[inline]
     #[must_use]
@@ -102,7 +82,6 @@ impl {{ self_t }} {
             {% endfor %}
         }
     }
-    {%- endif %}
 
     /// Creates a new vector from an array.
     #[inline]
@@ -147,9 +126,9 @@ impl {{ self_t }} {
     ///
     /// Panics if `slice` is less than {{ dim }} elements long.
     #[inline]
-    pub fn write_to_slice(&self, slice: &mut [{{ scalar_t }}]) {
+    pub fn write_to_slice(self, slice: &mut [{{ scalar_t }}]) {
         {% for c in components %}
-            slice[{{ loop.index0 }}] = self.{{ c }}.clone();
+            slice[{{ loop.index0 }}] = self.{{ c }};
         {%- endfor %}
     }
 
@@ -157,41 +136,37 @@ impl {{ self_t }} {
     /// Creates a 3D vector from `self` and the given `z` value.
     #[inline]
     #[must_use]
-    pub fn extend(&self, z: impl Into<{{ scalar_t }}>) -> {{ vec3_t }} {
-        {{ vec3_t }}::new(self.x.clone(), self.y.clone(), z.into())
+    pub fn extend(self, z: impl Into<{{ scalar_t }}>) -> {{ vec3_t }} {
+        {{ vec3_t }}::new(self.x, self.y, z.into())
     }
 {% elif dim == 3 %}
     /// Internal method for creating a 3D vector from a 4D vector, discarding `w`.
     #[allow(dead_code)]
     #[inline]
     #[must_use]
-    pub(crate) fn from_vec4(v: {{ vec4_t_ref }}) -> Self {
-        Self { x: v.x.clone(), y: v.y.clone(), z: v.z.clone() }
+    pub(crate) fn from_vec4(v: {{ vec4_t }}) -> Self {
+        Self { x: v.x, y: v.y, z: v.z }
     }
 
     /// Creates a 4D vector from `self` and the given `w` value.
     #[inline]
     #[must_use]
-    pub fn extend(&self, w: impl Into<{{ scalar_t }}>) -> {{ vec4_t }} {
-        {{ vec4_t }}::new(self.x.clone(), self.y.clone(), self.z.clone(), w.into())
+    pub fn extend(self, w: impl Into<{{ scalar_t }}>) -> {{ vec4_t }} {
+        {{ vec4_t }}::new(self.x, self.y, self.z, w.into())
     }
 
     /// Creates a 2D vector from the `x` and `y` elements of `self`, discarding `z`.
     #[inline]
     #[must_use]
-    pub fn truncate(&self) -> {{ vec2_t }} {
-        {{ vec2_t }}::new(self.x.clone(), self.y.clone())
+    pub fn truncate(self) -> {{ vec2_t }} {
+        {{ vec2_t }}::new(self.x, self.y)
     }
 {% elif dim == 4 %}
     /// Creates a 3D vector from the `x`, `y` and `z` elements of `self`, discarding `w`.
-{%- if scalar_t == "Tree" %}
-    ///
-    /// To truncate to [`Vec3A`] use [`Vec3A::from()`].
-{%- endif %}
     #[inline]
     #[must_use]
-    pub fn truncate(&self) -> {{ vec3_t }} {
-        {{ vec3_t }}::new(self.x.clone(), self.y.clone(), self.z.clone())
+    pub fn truncate(self) -> {{ vec3_t }} {
+        {{ vec3_t }}::new(self.x, self.y, self.z)
     }
 {% endif %}
 
@@ -209,30 +184,24 @@ impl {{ self_t }} {
     /// Computes the dot product of `self` and `rhs`.
     #[inline]
     #[must_use]
-    pub fn dot(&self, rhs: &Self) -> {{ scalar_t }} {
-        {% if is_float %}
-            self.x.clone() * rhs.x.clone()
-        {% else %}
+    pub fn dot(self, rhs: Self) -> {{ scalar_t }} {
         {% for c in components %}
-            (self.{{ c }}.clone() * rhs.{{ c }}.clone()) {% if not loop.last %} + {% endif %}
+            (self.{{ c }} * rhs.{{ c }}) {% if not loop.last %} + {% endif %}
         {%- endfor %}
-        {% endif %}
     }
 
-    {% if not is_float %}
     /// Returns a vector where every component is the dot product of `self` and `rhs`.
     #[inline]
     #[must_use]
-    pub fn dot_into_vec(&self, rhs: &Self) -> Self {
+    pub fn dot_into_vec(self, rhs: Self) -> Self {
         Self::splat(self.dot(rhs))
     }
-    {%- endif %}
 
 {% if dim == 3 %}
     /// Computes the cross product of `self` and `rhs`.
     #[inline]
     #[must_use]
-    pub fn cross(&self, rhs: &Self) -> Self {
+    pub fn cross(self, rhs: Self) -> Self {
         Self {
             x: self.y.clone() * rhs.z.clone() - rhs.y.clone() * self.z.clone(),
             y: self.z.clone() * rhs.x.clone() - rhs.z.clone() * self.x.clone(),
@@ -246,10 +215,10 @@ impl {{ self_t }} {
     /// In other words this computes `[self.x.min(rhs.x), self.y.min(rhs.y), ..]`.
     #[inline]
     #[must_use]
-    pub fn min(&self, rhs: &Self) -> Self {
+    pub fn min(self, rhs: Self) -> Self {
         Self {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.min(rhs.{{ c }}.clone()),
+                {{ c }}: self.{{ c }}.min(rhs.{{ c }}),
             {%- endfor %}
         }
     }
@@ -259,10 +228,10 @@ impl {{ self_t }} {
     /// In other words this computes `[self.x.max(rhs.x), self.y.max(rhs.y), ..]`.
     #[inline]
     #[must_use]
-    pub fn max(&self, rhs: &Self) -> Self {
+    pub fn max(self, rhs: Self) -> Self {
         Self {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.max(rhs.{{ c }}.clone()),
+                {{ c }}: self.{{ c }}.max(rhs.{{ c }}),
             {%- endfor %}
         }
     }
@@ -272,23 +241,22 @@ impl {{ self_t }} {
     /// Each element in `min` must be less-or-equal to the corresponding element in `max`.
     #[inline]
     #[must_use]
-    pub fn clamp(&self, min: &Self, max: &Self) -> Self {
+    pub fn clamp(self, min: Self, max: Self) -> Self {
         self.max(min).min(max)
     }
 
-    {% if not is_float %}
     /// Returns the horizontal minimum of `self`.
     ///
     /// In other words this computes `min(x, y, ..)`.
     #[inline]
     #[must_use]
-    pub fn min_element(&self) -> {{ scalar_t }} {
+    pub fn min_element(self) -> {{ scalar_t }} {
             {% if dim == 2 %}
-                self.x.clone().min(self.y.clone())
+                self.x.min(self.y)
             {% elif dim == 3 %}
-                self.x.clone().min(self.y.clone().min(self.z.clone()))
+                self.x.min(self.y.min(self.z))
             {% elif dim == 4 %}
-                self.x.clone().min(self.y.clone().min(self.z.clone().min(self.w.clone())))
+                self.x.min(self.y.min(self.z.min(self.w)))
             {% endif %}
     }
 
@@ -297,13 +265,13 @@ impl {{ self_t }} {
     /// In other words this computes `max(x, y, ..)`.
     #[inline]
     #[must_use]
-    pub fn max_element(&self) -> {{ scalar_t }} {
+    pub fn max_element(self) -> {{ scalar_t }} {
         {% if dim == 2 %}
-            self.x.clone().max(self.y.clone())
+            self.x.max(self.y)
         {% elif dim == 3 %}
-            self.x.clone().max(self.y.clone().max(self.z.clone()))
+            self.x.max(self.y.max(self.z))
         {% elif dim == 4 %}
-            self.x.clone().max(self.y.clone().max(self.z.clone().max(self.w.clone())))
+            self.x.max(self.y.max(self.z.max(self.w)))
         {% endif %}
     }
 
@@ -312,30 +280,30 @@ impl {{ self_t }} {
     /// In other words, this computes `self.x + self.y + ..`.
     #[inline]
     #[must_use]
-    pub fn element_sum(&self) -> {{ scalar_t }} {
+    pub fn element_sum(self) -> {{ scalar_t }} {
         {% for c in components %}
-            self.{{ c }}.clone() {% if not loop.last %} + {% endif %}
+            self.{{ c }} {% if not loop.last %} + {% endif %}
         {%- endfor %}
     }
+
     /// Returns the product of all elements of `self`.
     ///
     /// In other words, this computes `self.x * self.y * ..`.
     #[inline]
     #[must_use]
-    pub fn element_product(&self) -> {{ scalar_t }} {
+    pub fn element_product(self) -> {{ scalar_t }} {
         {% for c in components %}
-            self.{{ c }}.clone() {% if not loop.last %} * {% endif %}
+            self.{{ c }} {% if not loop.last %} * {% endif %}
         {%- endfor %}
     }
-    {% endif %}
 
     /// Returns a vector containing the absolute value of each element of `self`.
     #[inline]
     #[must_use]
-    pub fn abs(&self) -> Self {
+    pub fn abs(self) -> Self {
         Self {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.clone().abs(),
+                {{ c }}: self.{{ c }}.abs(),
             {%- endfor %}
         }
     }
@@ -348,10 +316,10 @@ impl {{ self_t }} {
     /// - `NAN` if the number is `NAN`
     #[inline]
     #[must_use]
-    pub fn signum(&self) -> Self {
+    pub fn signum(self) -> Self {
         Self {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.clone().signum(),
+                {{ c }}: self.{{ c }}.signum(),
             {%- endfor %}
         }
     }
@@ -361,7 +329,7 @@ impl {{ self_t }} {
     #[doc(alias = "magnitude")]
     #[inline]
     #[must_use]
-    pub fn length(&self) -> {{ scalar_t }} {
+    pub fn length(self) -> {{ scalar_t }} {
         self.clone().dot(self).sqrt()
     }
 
@@ -371,7 +339,7 @@ impl {{ self_t }} {
     #[doc(alias = "magnitude2")]
     #[inline]
     #[must_use]
-    pub fn length_squared(&self) -> {{ scalar_t }} {
+    pub fn length_squared(self) -> {{ scalar_t }} {
         self.clone().dot(self)
     }
 
@@ -380,29 +348,29 @@ impl {{ self_t }} {
     /// For valid results, `self` must _not_ be of length zero.
     #[inline]
     #[must_use]
-    pub fn length_recip(&self) -> {{ scalar_t }} {
+    pub fn length_recip(self) -> {{ scalar_t }} {
         Tree::constant(1.0) / self.length()
     }
 
     /// Computes the Euclidean distance between two points in space.
     #[inline]
     #[must_use]
-    pub fn distance(&self, rhs: &Self) -> {{ scalar_t }} {
-        (self.clone() - rhs).length()
+    pub fn distance(self, rhs: Self) -> {{ scalar_t }} {
+        (self - rhs).length()
     }
 
     /// Compute the squared euclidean distance between two points in space.
     #[inline]
     #[must_use]
-    pub fn distance_squared(&self, rhs: &Self) -> {{ scalar_t }} {
-        (self.clone() - rhs).length_squared()
+    pub fn distance_squared(self, rhs: Self) -> {{ scalar_t }} {
+        (self - rhs).length_squared()
     }
 
     /*
     /// Returns the element-wise quotient of [Euclidean division] of `self` by `rhs`.
     #[inline]
     #[must_use]
-    pub fn div_euclid(&self, rhs: &Self) -> Self {
+    pub fn div_euclid(self, rhs: Self) -> Self {
         Self::new(
             {% for c in components %}
                 self.{{ c }}.div_euclid(rhs.{{ c }}),
@@ -417,7 +385,7 @@ impl {{ self_t }} {
     /// [Euclidean division]: {{scalar_t}}::rem_euclid
     #[inline]
     #[must_use]
-    pub fn rem_euclid(&self, rhs: &Self) -> Self {
+    pub fn rem_euclid(self, rhs: Self) -> Self {
         Self::new(
             {% for c in components %}
                 self.{{ c }}.rem_euclid(rhs.{{ c }}),
@@ -433,9 +401,9 @@ impl {{ self_t }} {
     /// See also [`Self::try_normalize()`] and [`Self::normalize_or_zero()`].
     #[inline]
     #[must_use]
-    pub fn normalize(&self) -> Self {
+    pub fn normalize(self) -> Self {
         #[allow(clippy::let_and_return)]
-        let normalized = self.clone().mul(&self.length_recip());
+        let normalized = self.clone().mul(self.length_recip());
         normalized
     }
 
@@ -444,9 +412,9 @@ impl {{ self_t }} {
     /// `rhs` must be of non-zero length.
     #[inline]
     #[must_use]
-    pub fn project_onto(&self, rhs: &Self) -> Self {
-        let other_len_sq_rcp = Tree::constant(1.0) / rhs.clone().dot(rhs);
-        rhs.clone() * &self.dot(rhs) * &other_len_sq_rcp
+    pub fn project_onto(self, rhs: Self) -> Self {
+        let other_len_sq_rcp = Tree::constant(1.0) / rhs.clone().dot(rhs.clone());
+        rhs.clone() * self.dot(rhs) * other_len_sq_rcp
     }
 
     /// Returns the vector rejection of `self` from `rhs`.
@@ -457,8 +425,8 @@ impl {{ self_t }} {
     /// `rhs` must be of non-zero length.
     #[inline]
     #[must_use]
-    pub fn reject_from(&self, rhs: &Self) -> Self {
-        self.clone() - &self.project_onto(rhs)
+    pub fn reject_from(self, rhs: Self) -> Self {
+        self.clone() - self.project_onto(rhs)
     }
 
     /// Returns the vector projection of `self` onto `rhs`.
@@ -466,8 +434,8 @@ impl {{ self_t }} {
     /// `rhs` must be normalized.
     #[inline]
     #[must_use]
-    pub fn project_onto_normalized(&self, rhs: &Self) -> Self {
-        rhs.clone() * &self.dot(rhs)
+    pub fn project_onto_normalized(self, rhs: Self) -> Self {
+        rhs.clone() * self.dot(rhs)
     }
 
     /// Returns the vector rejection of `self` from `rhs`.
@@ -478,18 +446,18 @@ impl {{ self_t }} {
     /// `rhs` must be normalized.
     #[inline]
     #[must_use]
-    pub fn reject_from_normalized(&self, rhs: &Self) -> Self {
-        self.clone() - &self.project_onto_normalized(rhs)
+    pub fn reject_from_normalized(self, rhs: Self) -> Self {
+        self.clone() - self.project_onto_normalized(rhs)
     }
 
     /// Returns a vector containing the nearest integer to a number for each element of `self`.
     /// Round half-way cases away from 0.0.
     #[inline]
     #[must_use]
-    pub fn round(&self) -> Self {
+    pub fn round(self) -> Self {
         Self {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.clone().round(),
+                {{ c }}: self.{{ c }}.round(),
             {%- endfor %}
         }
     }
@@ -498,10 +466,10 @@ impl {{ self_t }} {
     /// element of `self`.
     #[inline]
     #[must_use]
-    pub fn floor(&self) -> Self {
+    pub fn floor(self) -> Self {
         Self {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.clone().floor(),
+                {{ c }}: self.{{ c }}.floor(),
             {%- endfor %}
         }
     }
@@ -510,10 +478,10 @@ impl {{ self_t }} {
     /// each element of `self`.
     #[inline]
     #[must_use]
-    pub fn ceil(&self) -> Self {
+    pub fn ceil(self) -> Self {
         Self {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.clone().ceil(),
+                {{ c }}: self.{{ c }}.ceil(),
             {%- endfor %}
         }
     }
@@ -523,10 +491,10 @@ impl {{ self_t }} {
     /// always truncated towards zero.
     #[inline]
     #[must_use]
-    pub fn trunc(&self) -> Self {
+    pub fn trunc(self) -> Self {
         Self {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.clone().trunc(),
+                {{ c }}: self.{{ c }}.trunc(),
             {%- endfor %}
         }
     }
@@ -541,8 +509,8 @@ impl {{ self_t }} {
     /// Note that this is fast but not precise for large numbers.
     #[inline]
     #[must_use]
-    pub fn fract(&self) -> Self {
-        self.clone() - self.trunc()
+    pub fn fract(self) -> Self {
+        self - self.trunc()
     }
     */
 
@@ -554,18 +522,18 @@ impl {{ self_t }} {
     /// Note that this is fast but not precise for large numbers.
     #[inline]
     #[must_use]
-    pub fn fract_gl(&self) -> Self {
-        self.clone() - &self.floor()
+    pub fn fract_gl(self) -> Self {
+        self.clone() - self.floor()
     }
 
     /// Returns a vector containing `e^self` (the exponential function) for each element of
     /// `self`.
     #[inline]
     #[must_use]
-    pub fn exp(&self) -> Self {
+    pub fn exp(self) -> Self {
         Self::new(
             {% for c in components %}
-                self.{{ c }}.clone().exp(),
+                self.{{ c }}.exp(),
             {%- endfor %}
         )
     }
@@ -574,7 +542,7 @@ impl {{ self_t }} {
     /// Returns a vector containing each element of `self` raised to the power of `n`.
     #[inline]
     #[must_use]
-    pub fn powf(&self, n: {{ scalar_t }}) -> Self {
+    pub fn powf(self, n: {{ scalar_t }}) -> Self {
         Self::new(
             {% for c in components %}
                 math::powf(self.{{ c }}, n),
@@ -586,10 +554,10 @@ impl {{ self_t }} {
     /// Returns a vector containing the reciprocal `1.0/n` of each element of `self`.
     #[inline]
     #[must_use]
-    pub fn recip(&self) -> Self {
+    pub fn recip(self) -> Self {
         Self {
             {% for c in components %}
-                {{ c }}: Tree::constant(1.0) / self.{{ c }}.clone(),
+                {{ c }}: Tree::constant(1.0) / self.{{ c }},
             {%- endfor %}
         }
     }
@@ -602,8 +570,8 @@ impl {{ self_t }} {
     #[doc(alias = "mix")]
     #[inline]
     #[must_use]
-    pub fn lerp(&self, rhs: &Self, s: &{{ scalar_t }}) -> Self {
-        self.clone() + &((rhs.clone() - self) * s)
+    pub fn lerp(self, rhs: Self, s: impl Into<{{ scalar_t }}>) -> Self {
+        self.clone() + ((rhs - self) * s.into())
     }
 
     /// Calculates the midpoint between `self` and `rhs`. 
@@ -612,18 +580,18 @@ impl {{ self_t }} {
     /// `a.midpoint(b)` should yield the same result as `a.lerp(b, 0.5)`
     /// while being slightly cheaper to compute.
     #[inline]
-    pub fn midpoint(&self, rhs: &Self) -> Self {
-        (self.clone() + rhs) * &Tree::constant(0.5)
+    pub fn midpoint(self, rhs: Self) -> Self {
+        (self + rhs) * Tree::constant(0.5)
     }
 
 {% if dim == 2 %}
     /// Returns a vector that is equal to `self` rotated by 90 degrees.
     #[inline]
     #[must_use]
-    pub fn perp(&self) -> Self {
+    pub fn perp(self) -> Self {
         Self {
-            x: self.y.clone().neg(),
-            y: self.x.clone(),
+            x: self.y.neg(),
+            y: self.x,
         }
     }
 
@@ -634,8 +602,8 @@ impl {{ self_t }} {
     #[doc(alias = "determinant")]
     #[inline]
     #[must_use]
-    pub fn perp_dot(&self, rhs: &Self) -> {{ scalar_t }} {
-        (self.x.clone() * rhs.y.clone()) - (self.y.clone() * rhs.x.clone())
+    pub fn perp_dot(self, rhs: Self) -> {{ scalar_t }} {
+        (self.x * rhs.y) - (self.y * rhs.x)
     }
 
     /// Returns `rhs` rotated by the angle of `self`. If `self` is normalized,
@@ -643,7 +611,7 @@ impl {{ self_t }} {
     /// it will be like a rotation with a multiplication by `self`'s length.
     #[inline]
     #[must_use]
-    pub fn rotate(&self, rhs: &Self) -> Self {
+    pub fn rotate(self, rhs: Self) -> Self {
         Self {
             x: self.x.clone() * rhs.x.clone() - self.y.clone() * rhs.y.clone(),
             y: self.y.clone() * rhs.x.clone() + self.x.clone() * rhs.y.clone(),
@@ -655,39 +623,35 @@ impl {{ self_t }} {
 impl Default for {{ self_t }} {
     #[inline(always)]
     fn default() -> Self {
-        {% if is_float %}
-        Self::new(Tree::constant(0.0))
-        {%- else %}
         Self::splat(Tree::constant(0.0))
-        {%- endif %}
     }
 }
 
-impl Div<{{ self_t_ref }}> for {{ self_t }} {
+impl Div<{{ self_t }}> for {{ self_t }} {
     type Output = Self;
     #[inline]
-    fn div(self, rhs: &Self) -> Self {
+    fn div(self, rhs: Self) -> Self {
         Self {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.div(rhs.{{ c }}.clone()),
+                {{ c }}: self.{{ c }}.div(rhs.{{ c }}),
             {%- endfor %}
         }
     }
 }
 
-impl DivAssign<{{ self_t_ref }}> for {{ self_t }} {
+impl DivAssign<{{ self_t }}> for {{ self_t }} {
     #[inline]
-    fn div_assign(&mut self, rhs: &Self) {
+    fn div_assign(&mut self, rhs: Self) {
         {% for c in components %}
-            self.{{ c }}.div_assign(rhs.{{ c }}.clone());
+            self.{{ c }}.div_assign(rhs.{{ c }});
         {%- endfor %}
     }
 }
 
-impl Div<{{ scalar_t_ref }}> for {{ self_t }} {
+impl Div<{{ scalar_t }}> for {{ self_t }} {
     type Output = Self;
     #[inline]
-    fn div(self, rhs: {{ scalar_t_ref }}) -> Self {
+    fn div(self, rhs: {{ scalar_t }}) -> Self {
         Self {
             {% for c in components %}
                 {{ c }}: self.{{ c }}.div(rhs.clone()),
@@ -696,54 +660,52 @@ impl Div<{{ scalar_t_ref }}> for {{ self_t }} {
     }
 }
 
-impl DivAssign<{{ scalar_t_ref }}> for {{ self_t }} {
+impl DivAssign<{{ scalar_t }}> for {{ self_t }} {
     #[inline]
-    fn div_assign(&mut self, rhs: {{ scalar_t_ref }}) {
+    fn div_assign(&mut self, rhs: {{ scalar_t }}) {
         {% for c in components %}
             self.{{ c }}.div_assign(rhs.clone());
         {%- endfor %}
     }
 }
 
-{% if not is_float %}
-    impl Div<{{ self_t_ref }}> for {{ scalar_t_ref }} {
-        type Output = {{ self_t }};
-        #[inline]
-        fn div(self, rhs: &{{ self_t }}) -> {{ self_t }} {
-            {{ self_t }} {
-                {% for c in components %}
-                    {{ c }}: self.clone().div(rhs.{{ c }}.clone()),
-                {%- endfor %}
-            }
-        }
-    }
-{%- endif %}
-
-impl Mul<{{ self_t_ref }}> for {{ self_t }} {
-    type Output = Self;
+impl Div<{{ self_t }}> for {{ scalar_t }} {
+    type Output = {{ self_t }};
     #[inline]
-    fn mul(self, rhs: &Self) -> Self {
-        Self {
+    fn div(self, rhs: {{ self_t }}) -> {{ self_t }} {
+        {{ self_t }} {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.mul(rhs.{{ c }}.clone()),
+                {{ c }}: self.clone().div(rhs.{{ c }}),
             {%- endfor %}
         }
     }
 }
 
-impl MulAssign<{{ self_t_ref }}> for {{ self_t }} {
+impl Mul<{{ self_t }}> for {{ self_t }} {
+    type Output = Self;
     #[inline]
-    fn mul_assign(&mut self, rhs: &Self) {
+    fn mul(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.mul(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
+}
+
+impl MulAssign<{{ self_t }}> for {{ self_t }} {
+    #[inline]
+    fn mul_assign(&mut self, rhs: Self) {
         {% for c in components %}
-            self.{{ c }}.mul_assign(rhs.{{ c }}.clone());
+            self.{{ c }}.mul_assign(rhs.{{ c }});
         {%- endfor %}
     }
 }
 
-impl Mul<{{ scalar_t_ref }}> for {{ self_t }} {
+impl Mul<{{ scalar_t }}> for {{ self_t }} {
     type Output = Self;
     #[inline]
-    fn mul(self, rhs: {{ scalar_t_ref }}) -> Self {
+    fn mul(self, rhs: {{ scalar_t }}) -> Self {
         Self {
             {% for c in components %}
                 {{ c }}: self.{{ c }}.mul(rhs.clone()),
@@ -752,54 +714,52 @@ impl Mul<{{ scalar_t_ref }}> for {{ self_t }} {
     }
 }
 
-impl MulAssign<{{ scalar_t_ref }}> for {{ self_t }} {
+impl MulAssign<{{ scalar_t }}> for {{ self_t }} {
     #[inline]
-    fn mul_assign(&mut self, rhs: {{ scalar_t_ref }}) {
+    fn mul_assign(&mut self, rhs: {{ scalar_t }}) {
         {% for c in components %}
             self.{{ c }}.mul_assign(rhs.clone());
         {%- endfor %}
     }
 }
 
-{% if not is_float %}
-    impl Mul<{{ self_t_ref }}> for {{ scalar_t_ref }} {
-        type Output = {{ self_t }};
-        #[inline]
-        fn mul(self, rhs: &{{ self_t }}) -> {{ self_t }} {
-            {{ self_t }} {
-                {% for c in components %}
-                    {{ c }}: self.clone().mul(rhs.{{ c }}.clone()),
-                {%- endfor %}
-            }
-        }
-    }
-{%- endif %}
-
-impl Add<{{ self_t_ref }}> for {{ self_t }} {
-    type Output = Self;
+impl Mul<{{ self_t }}> for {{ scalar_t }} {
+    type Output = {{ self_t }};
     #[inline]
-    fn add(self, rhs: &Self) -> Self {
-        Self {
+    fn mul(self, rhs: {{ self_t }}) -> {{ self_t }} {
+        {{ self_t }} {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.add(rhs.{{ c }}.clone()),
+                {{ c }}: self.clone().mul(rhs.{{ c }}),
             {%- endfor %}
         }
     }
 }
 
-impl AddAssign<{{ self_t_ref }}> for {{ self_t }} {
+impl Add<{{ self_t }}> for {{ self_t }} {
+    type Output = Self;
     #[inline]
-    fn add_assign(&mut self, rhs: &Self) {
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.add(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
+}
+
+impl AddAssign<{{ self_t }}> for {{ self_t }} {
+    #[inline]
+    fn add_assign(&mut self, rhs: Self) {
         {% for c in components %}
-            self.{{ c }}.add_assign(rhs.{{ c }}.clone());
+            self.{{ c }}.add_assign(rhs.{{ c }});
         {%- endfor %}
     }
 }
 
-impl Add<{{ scalar_t_ref }}> for {{ self_t }} {
+impl Add<{{ scalar_t }}> for {{ self_t }} {
     type Output = Self;
     #[inline]
-    fn add(self, rhs: {{ scalar_t_ref }}) -> Self {
+    fn add(self, rhs: {{ scalar_t }}) -> Self {
         Self {
             {% for c in components %}
                 {{ c }}: self.{{ c }}.add(rhs.clone()),
@@ -808,54 +768,52 @@ impl Add<{{ scalar_t_ref }}> for {{ self_t }} {
     }
 }
 
-impl AddAssign<{{ scalar_t_ref }}> for {{ self_t }} {
+impl AddAssign<{{ scalar_t }}> for {{ self_t }} {
     #[inline]
-    fn add_assign(&mut self, rhs: {{ scalar_t_ref }}) {
+    fn add_assign(&mut self, rhs: {{ scalar_t }}) {
         {% for c in components %}
             self.{{ c }}.add_assign(rhs.clone());
         {%- endfor %}
     }
 }
 
-{% if not is_float %}
-    impl Add<{{ self_t_ref }}> for {{ scalar_t_ref }} {
-        type Output = {{ self_t }};
-        #[inline]
-        fn add(self, rhs: &{{ self_t }}) -> {{ self_t }} {
-            {{ self_t }} {
-                {% for c in components %}
-                    {{ c }}: self.clone().add(rhs.{{ c }}.clone()),
-                {%- endfor %}
-            }
-        }
-    }
-{%- endif %}
-
-impl Sub<{{ self_t_ref }}> for {{ self_t }} {
-    type Output = Self;
+impl Add<{{ self_t }}> for {{ scalar_t }} {
+    type Output = {{ self_t }};
     #[inline]
-    fn sub(self, rhs: &Self) -> Self {
-        Self {
+    fn add(self, rhs: {{ self_t }}) -> {{ self_t }} {
+        {{ self_t }} {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.sub(rhs.{{ c }}.clone()),
+                {{ c }}: self.clone().add(rhs.{{ c }}),
             {%- endfor %}
         }
     }
 }
 
-impl SubAssign<{{ self_t_ref }}> for {{ self_t }} {
+impl Sub<{{ self_t }}> for {{ self_t }} {
+    type Output = Self;
     #[inline]
-    fn sub_assign(&mut self, rhs: &{{ self_t }}) {
+    fn sub(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.sub(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
+}
+
+impl SubAssign<{{ self_t }}> for {{ self_t }} {
+    #[inline]
+    fn sub_assign(&mut self, rhs: {{ self_t }}) {
         {% for c in components %}
-            self.{{ c }}.sub_assign(rhs.{{ c }}.clone());
+            self.{{ c }}.sub_assign(rhs.{{ c }});
         {%- endfor %}
     }
 }
 
-impl Sub<{{ scalar_t_ref }}> for {{ self_t }} {
+impl Sub<{{ scalar_t }}> for {{ self_t }} {
     type Output = Self;
     #[inline]
-    fn sub(self, rhs: {{ scalar_t_ref }}) -> Self {
+    fn sub(self, rhs: {{ scalar_t }}) -> Self {
         Self {
             {% for c in components %}
                 {{ c }}: self.{{ c }}.sub(rhs.clone()),
@@ -864,54 +822,52 @@ impl Sub<{{ scalar_t_ref }}> for {{ self_t }} {
     }
 }
 
-impl SubAssign<{{ scalar_t_ref }}> for {{ self_t }} {
+impl SubAssign<{{ scalar_t }}> for {{ self_t }} {
     #[inline]
-    fn sub_assign(&mut self, rhs: {{ scalar_t_ref }}) {
+    fn sub_assign(&mut self, rhs: {{ scalar_t }}) {
         {% for c in components %}
             self.{{ c }}.sub_assign(rhs.clone());
         {%- endfor %}
     }
 }
 
-{% if not is_float %}
-    impl Sub<{{ self_t_ref }}> for {{ scalar_t_ref }} {
-        type Output = {{ self_t }};
-        #[inline]
-        fn sub(self, rhs: &{{ self_t }}) -> {{ self_t }} {
-            {{ self_t }} {
-                {% for c in components %}
-                    {{ c }}: self.clone().sub(rhs.{{ c }}.clone()),
-                {%- endfor %}
-            }
-        }
-    }
-{%- endif %}
-
-impl Rem<{{ self_t_ref }}> for {{ self_t }} {
-    type Output = Self;
+impl Sub<{{ self_t }}> for {{ scalar_t }} {
+    type Output = {{ self_t }};
     #[inline]
-    fn rem(self, rhs: &Self) -> Self {
-        Self {
+    fn sub(self, rhs: {{ self_t }}) -> {{ self_t }} {
+        {{ self_t }} {
             {% for c in components %}
-                {{ c }}: self.{{ c }}.modulo(rhs.{{ c }}.clone()),
+                {{ c }}: self.clone().sub(rhs.{{ c }}),
             {%- endfor %}
         }
     }
 }
 
-impl RemAssign<{{ self_t_ref }}> for {{ self_t }} {
+impl Rem<{{ self_t }}> for {{ self_t }} {
+    type Output = Self;
     #[inline]
-    fn rem_assign(&mut self, rhs: &Self) {
+    fn rem(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.modulo(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
+}
+
+impl RemAssign<{{ self_t }}> for {{ self_t }} {
+    #[inline]
+    fn rem_assign(&mut self, rhs: Self) {
         {% for c in components %}
-            self.{{ c }} = self.{{ c }}.modulo(rhs.{{ c }}.clone());
+            self.{{ c }} = self.{{ c }}.modulo(rhs.{{ c }});
         {%- endfor %}
     }
 }
 
-impl Rem<{{ scalar_t_ref }}> for {{ self_t }} {
+impl Rem<{{ scalar_t }}> for {{ self_t }} {
     type Output = Self;
     #[inline]
-    fn rem(self, rhs: {{ scalar_t_ref }}) -> Self {
+    fn rem(self, rhs: {{ scalar_t }}) -> Self {
         Self {
             {% for c in components %}
                 {{ c }}: self.{{ c }}.modulo(rhs.clone()),
@@ -920,22 +876,22 @@ impl Rem<{{ scalar_t_ref }}> for {{ self_t }} {
     }
 }
 
-impl RemAssign<{{ scalar_t_ref }}> for {{ self_t }} {
+impl RemAssign<{{ scalar_t }}> for {{ self_t }} {
     #[inline]
-    fn rem_assign(&mut self, rhs: {{ scalar_t_ref }}) {
+    fn rem_assign(&mut self, rhs: {{ scalar_t }}) {
         {% for c in components %}
             self.{{ c }} = self.{{ c }}.modulo(rhs.clone());
         {%- endfor %}
     }
 }
 
-impl Rem<{{ self_t_ref }}> for {{ scalar_t_ref }} {
+impl Rem<{{ self_t }}> for {{ scalar_t }} {
     type Output = {{ self_t }};
     #[inline]
-    fn rem(self, rhs: &{{ self_t }}) -> {{ self_t }} {
+    fn rem(self, rhs: {{ self_t }}) -> {{ self_t }} {
         {{ self_t }} {
             {% for c in components %}
-                {{ c }}: self.clone().modulo(rhs.{{ c }}.clone()),
+                {{ c }}: self.clone().modulo(rhs.{{ c }}),
             {%- endfor %}
         }
     }
@@ -957,14 +913,13 @@ impl AsMut<[{{ scalar_t }}; {{ dim }}]> for {{ self_t }} {
     }
 }
 
-{% if not is_float %}
 impl Sum for {{ self_t }} {
     #[inline]
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = Self>,
     {
-        iter.fold(Self::splat(Tree::constant(0.0)), |a, b| Self::add(a, &b))
+        iter.fold(Self::splat(Tree::constant(0.0)), Self::add)
     }
 }
 
@@ -974,7 +929,7 @@ impl<'a> Sum<&'a Self> for {{ self_t }} {
     where
         I: Iterator<Item = &'a Self>,
     {
-        iter.fold(Self::splat(Tree::constant(0.0)), |a, b| Self::add(a, b))
+        iter.fold(Self::splat(Tree::constant(0.0)), |a, b| Self::add(a, b.clone()))
     }
 }
 
@@ -984,7 +939,7 @@ impl Product for {{ self_t }} {
     where
         I: Iterator<Item = Self>,
     {
-        iter.fold(Self::splat(Tree::constant(1.0)), |a, b| Self::mul(a, &b))
+        iter.fold(Self::splat(Tree::constant(1.0)), Self::mul)
     }
 }
 
@@ -994,10 +949,9 @@ impl<'a> Product<&'a Self> for {{ self_t }} {
     where
         I: Iterator<Item = &'a Self>,
     {
-        iter.fold(Self::splat(Tree::constant(1.0)), |a, b| Self::mul(a, b))
+        iter.fold(Self::splat(Tree::constant(1.0)), |a, b| Self::mul(a, b.clone()))
     }
 }
-{%- endif %}
 
 impl Neg for {{ self_t }} {
     type Output = Self;
@@ -1100,86 +1054,70 @@ impl From<{{ self_t }}> for {{ macros::make_tuple_t(t=scalar_t, n=dim) }} {
 }
 
 {% if dim == 3 %}
-impl From<({{ vec2_t_ref }}, {{ scalar_t }})> for {{ self_t }} {
+impl From<({{ vec2_t }}, {{ scalar_t }})> for {{ self_t }} {
     #[inline]
-    fn from((v, z): ({{ vec2_t_ref }}, {{ scalar_t }})) -> Self {
-        Self::new(v.x.clone(), v.y.clone(), z)
+    fn from((v, z): ({{ vec2_t }}, {{ scalar_t }})) -> Self {
+        Self::new(v.x, v.y, z)
     }
 }
 {% elif dim == 4 %}
-impl From<({{ vec3_t_ref }}, {{ scalar_t }})> for {{ self_t }} {
+impl From<({{ vec3_t }}, {{ scalar_t }})> for {{ self_t }} {
     #[inline]
-    fn from((v, w): ({{ vec3_t_ref }}, {{ scalar_t }})) -> Self {
-        Self::new(v.x.clone(), v.y.clone(), v.z.clone(), w)
+    fn from((v, w): ({{ vec3_t }}, {{ scalar_t }})) -> Self {
+        Self::new(v.x, v.y, v.z, w)
     }
 }
 
-impl From<({{ scalar_t }}, {{ vec3_t_ref }})> for {{ self_t }} {
+impl From<({{ scalar_t }}, {{ vec3_t }})> for {{ self_t }} {
     #[inline]
-    fn from((x, v): ({{ scalar_t }}, {{ vec3_t_ref }})) -> Self {
-        Self::new(x, v.x.clone(), v.y.clone(), v.z.clone())
+    fn from((x, v): ({{ scalar_t }}, {{ vec3_t }})) -> Self {
+        Self::new(x, v.x, v.y, v.z)
     }
 }
 
-impl From<({{ vec2_t_ref }}, {{ scalar_t }}, {{ scalar_t }})> for {{ self_t }} {
+impl From<({{ vec2_t }}, {{ scalar_t }}, {{ scalar_t }})> for {{ self_t }} {
     #[inline]
-    fn from((v, z, w): ({{ vec2_t_ref }}, {{ scalar_t }}, {{ scalar_t }})) -> Self {
-        Self::new(v.x.clone(), v.y.clone(), z, w)
+    fn from((v, z, w): ({{ vec2_t }}, {{ scalar_t }}, {{ scalar_t }})) -> Self {
+        Self::new(v.x, v.y, z, w)
     }
 }
 
-impl From<({{ vec2_t_ref }}, {{ vec2_t_ref }})> for {{ self_t }} {
+impl From<({{ vec2_t }}, {{ vec2_t }})> for {{ self_t }} {
     #[inline]
-    fn from((v, u): ({{ vec2_t_ref }}, {{ vec2_t_ref }})) -> Self {
-        Self::new(v.x.clone(), v.y.clone(), u.x.clone(), u.y.clone())
+    fn from((v, u): ({{ vec2_t }}, {{ vec2_t }})) -> Self {
+        Self::new(v.x, v.y, u.x, u.y)
     }
 }
 {% endif %}
 
-{% if not is_float %}
-    {% if from_types %}
-        {% for ty in from_types %}
-        impl From<{{ ty }}> for {{ self_t }} {
-            #[inline]
-            fn from(v: {{ ty }}) -> Self {
-                Self::new(
-                    {% for c in components %}
-                        {{ scalar_t }}::from(v.{{ c }}),
-                    {% endfor %}
-                )
-            }
+{% if from_types %}
+    {% for ty in from_types %}
+    impl From<{{ ty }}> for {{ self_t }} {
+        #[inline]
+        fn from(v: {{ ty }}) -> Self {
+            Self::new(
+                {% for c in components %}
+                    {{ scalar_t }}::from(v.{{ c }}),
+                {% endfor %}
+            )
         }
-        {% endfor %}
-    {% endif %}
+    }
+    {% endfor %}
+{% endif %}
 
-    {% if try_from_types %}
-        {% for ty in try_from_types %}
-        impl TryFrom<{{ ty }}> for {{ self_t }} {
-            type Error = core::num::TryFromIntError;
+{% if try_from_types %}
+    {% for ty in try_from_types %}
+    impl TryFrom<{{ ty }}> for {{ self_t }} {
+        type Error = core::num::TryFromIntError;
 
-            #[inline]
-            fn try_from(v: {{ ty }}) -> Result<Self, Self::Error> {
-                Ok(Self::new(
-                    {% for c in components %}
-                        {{ scalar_t }}::try_from(v.{{ c }})?,
-                    {% endfor %}
-                ))
-            }
+        #[inline]
+        fn try_from(v: {{ ty }}) -> Result<Self, Self::Error> {
+            Ok(Self::new(
+                {% for c in components %}
+                    {{ scalar_t }}::try_from(v.{{ c }})?,
+                {% endfor %}
+            ))
         }
-        {% endfor %}
-    {%- endif %}
-{%- else %}
-impl From<{{ scalar_t }}> for {{ self_t }} {
-    #[inline]
-    fn from(t: {{ scalar_t }}) -> Self {
-        Self::new(t)
     }
-}
-
-impl From<{{ self_t }}> for {{ scalar_t }} {
-    #[inline]
-    fn from(v: {{ self_t }}) -> Self {
-        v.x
-    }
-}
-{%- endif %}
+    {% endfor %}
+{% endif %}
