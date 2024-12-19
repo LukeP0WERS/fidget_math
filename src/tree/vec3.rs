@@ -1,6 +1,5 @@
 // Generated from vec.rs.tera template. Edit the template, not the generated file.
 
-#[cfg(not(target_arch = "spirv"))]
 use core::fmt;
 use core::iter::{Product, Sum};
 use core::ops::*;
@@ -807,7 +806,6 @@ impl Rem<TreeVec3> for Tree {
     }
 }
 
-#[cfg(not(target_arch = "spirv"))]
 impl AsRef<[Tree; 3]> for TreeVec3 {
     #[inline]
     fn as_ref(&self) -> &[Tree; 3] {
@@ -815,7 +813,6 @@ impl AsRef<[Tree; 3]> for TreeVec3 {
     }
 }
 
-#[cfg(not(target_arch = "spirv"))]
 impl AsMut<[Tree; 3]> for TreeVec3 {
     #[inline]
     fn as_mut(&mut self) -> &mut [Tree; 3] {
@@ -904,7 +901,6 @@ impl IndexMut<usize> for TreeVec3 {
     }
 }
 
-#[cfg(not(target_arch = "spirv"))]
 impl fmt::Debug for TreeVec3 {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt.debug_tuple(stringify!(TreeVec3))

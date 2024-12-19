@@ -17,7 +17,6 @@
 
 {% set components = ["x", "y", "z", "w"] | slice(end = dim) %}
 
-#[cfg(not(target_arch = "spirv"))]
 use core::fmt;
 use core::iter::{Product, Sum};
 use core::ops::*;
@@ -897,7 +896,6 @@ impl Rem<{{ self_t }}> for {{ scalar_t }} {
     }
 }
 
-#[cfg(not(target_arch = "spirv"))]
 impl AsRef<[{{ scalar_t }}; {{ dim }}]> for {{ self_t }} {
     #[inline]
     fn as_ref(&self) -> &[{{ scalar_t }}; {{ dim }}] {
@@ -905,7 +903,6 @@ impl AsRef<[{{ scalar_t }}; {{ dim }}]> for {{ self_t }} {
     }
 }
 
-#[cfg(not(target_arch = "spirv"))]
 impl AsMut<[{{ scalar_t }}; {{ dim }}]> for {{ self_t }} {
     #[inline]
     fn as_mut(&mut self) -> &mut [{{ scalar_t }}; {{ dim }}] {
@@ -998,7 +995,6 @@ impl IndexMut<usize> for {{ self_t }} {
     }
 }
 
-#[cfg(not(target_arch = "spirv"))]
 impl fmt::Debug for {{ self_t }} {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt.debug_tuple(stringify!({{ self_t }}))
